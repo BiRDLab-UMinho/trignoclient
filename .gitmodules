@@ -1,0 +1,3 @@
+[submodule "etc/cv-plot"]
+	path = etc/cv-plot
+	url = https://github.com/Profactor/cv-plot
