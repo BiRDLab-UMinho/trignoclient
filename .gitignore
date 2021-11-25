@@ -2,6 +2,6 @@
 *.bak
 *.old
 *.html
-./doc/*
-./build/*
+doc/*
+build/*
 
