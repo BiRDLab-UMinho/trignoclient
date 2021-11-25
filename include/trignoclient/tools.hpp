@@ -1,0 +1,15 @@
+// basic structures and definitions
+#include "sensor.hpp"
+#include "sample.hpp"
+#include "frame.hpp"
+#include "sequence.hpp"
+#include "duration.hpp"
+// higher level tools
+#include "exporter.hpp"
+#include "logger.hpp"
+#include "recorder.hpp"
+#include "iterative.hpp"
+#include "sequence_metrics.hpp"
+#include "basic_protocol.hpp"
+#include "mvc.hpp"
+#include "simple_trial.hpp"
