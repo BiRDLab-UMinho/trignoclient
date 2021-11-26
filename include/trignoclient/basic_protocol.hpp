@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <initializer_list>
+#include "duration.hpp"  // trigno::Duration
 #include "client.hpp"    // trigno::network::Client
 #include "sequence.hpp"  // trigno::Sequence
 
@@ -98,7 +99,7 @@ class BasicProtocol {
     /// @param[in]  message_format  Message format. Default to empty text (no output).
     /// @param[in]  log_interval    Time to wait between text output. Ignored if *message* is empty, defaults to 1s.
     ///
-    static void wait(const std::duration& time, const std::string& message = "", float log_interval = 1.0);
+    static void wait(const Duration& time, const std::string& message = "", const Duration& log_interval = Duration(1000));
 
     //--------------------------------------------------------------------------
     /// @brief      Records (& optionally exports) data for given *sensors*, adding it to the sequence buffer (or writing to local file).
@@ -110,10 +111,9 @@ class BasicProtocol {
     ///
     /// @return     Sequence of data frames received during record operation.
     ///
-    static trigno::Sequence record(trigno::network::BasicDataClient* data_client,
-                                   const sensor::List&               sensors       = sensor::all,
-                                   const std::duration&              time         = std::duration(0.0),
-                                   float                             log_interval = 0.5);
+    static trigno::Sequence record(trigno::network::BasicDataClient* data_client, const sensor::List& sensors = sensor::all,
+                                                                                  const Duration& time = Duration(0),
+                                                                                  const Duration& log_interval = Duration(1000));
 
     //--------------------------------------------------------------------------
     /// @brief      Exports up to *n_frames* from data sequence buffer to file.
@@ -140,7 +140,7 @@ class BasicProtocol {
     ///
     /// @return     User input text.
     ///
-    static std::string prompt(const std::string& query, float timeout);
+    static std::string prompt(const std::string& query, const Duration& timeout = Duration(0));
 
 #ifdef WITH_PLOTTING
     //--------------------------------------------------------------------------

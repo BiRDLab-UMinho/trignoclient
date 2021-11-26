@@ -19,7 +19,6 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
-#include "std/duration.hpp"     // std::duration
 
 namespace std {
 
@@ -90,7 +89,7 @@ class tcp_client {
     /// @param[in]  port     Host port/service
     /// @param[in]  timeout  Timeout/timeout value. Defaults to 1 second.
     ///
-    void connect(const string& address, int port, const duration& timeout = duration(1.0 /* seconds */));
+    void connect(const string& address, int port, const chrono::milliseconds& timeout = chrono::milliseconds(1000));
 
     //--------------------------------------------------------------------------
     /// @brief      Shutsdown connection, closing the socket in the process.
@@ -102,7 +101,7 @@ class tcp_client {
     ///
     /// @param[in]  timeout  Timeout/timeout value. Defaults to infinite (no timeout).
     ///
-    void reset(const duration& timeout = duration::max());
+    void reset(const chrono::milliseconds& timeout = chrono::milliseconds(10000));
 
     //--------------------------------------------------------------------------
     /// @brief      Runs IO service on a loop, until all current asynchronous operations are completed or timeout is expired.
@@ -126,7 +125,7 @@ class tcp_client {
     /// @note       Buffer must be compatible with boost::asio::buffer() -> boost::array, std::array, std::vector, etc.
     ///
     template < typename Buffer >
-    void read(Buffer& buffer, const duration& timeout = duration(1.0 /* seconds */));
+    void read(Buffer& buffer, const chrono::milliseconds& timeout = chrono::milliseconds(1000));
 
     //--------------------------------------------------------------------------
     /// @brief      Read a fixed-size character sequence from remote host.
@@ -140,7 +139,7 @@ class tcp_client {
     /// @note       Static/fixed-size buffer variant, useful when message length is already known/constant.
     ///
     template < int Size >
-    static_buffer< Size > read(const duration& timeout = duration(1.0 /* seconds */));
+    static_buffer< Size > read(const chrono::milliseconds& timeout = chrono::milliseconds(1000));
 
     //--------------------------------------------------------------------------
     /// @brief      Reads a variable character sequence from remote host, into a pre-allocated buffer.
@@ -156,7 +155,7 @@ class tcp_client {
     /// @return     True if read was successful, false otherwise.
     ///
     template < typename Buffer >
-    void read_until(char stop, Buffer& buffer, const duration& timeout = duration(1.0 /* seconds */));
+    void read_until(char stop, Buffer& buffer, const chrono::milliseconds& timeout = chrono::milliseconds(1000));
 
     //--------------------------------------------------------------------------
     /// @brief      Reads a variable character sequence from remote host.
@@ -168,7 +167,7 @@ class tcp_client {
     ///
     /// @note       Dynamic buffer variant, useful when message length is unknown (a stop character is required).
     ///
-    dynamic_buffer read_until(char stop, const duration& timeout = duration(1.0 /* seconds */));
+    dynamic_buffer read_until(char stop, const chrono::milliseconds& timeout = chrono::milliseconds(1000));
 
     //--------------------------------------------------------------------------
     /// @brief      Writes a character sequence to the remote host.
@@ -181,7 +180,7 @@ class tcp_client {
     /// @note       Does not add any stop character. If the communication protocol requires, take care to add it at the end of buffer.
     ///
     template < typename Buffer >
-    void write(const Buffer& buffer, const duration& timeout = duration(1.0 /* seconds */));
+    void write(const Buffer& buffer, const chrono::milliseconds& timeout = chrono::milliseconds(1000));
 
     //--------------------------------------------------------------------------
     /// @brief      Checks if timeout has been reached.
@@ -252,7 +251,6 @@ class tcp_client {
 
 
 inline tcp_client::tcp_client() :
-    // _io(),
     _timer(_io),
     _socket(_io) {
         // ...
@@ -279,7 +277,7 @@ inline bool tcp_client::is_connected() const {
 
 
 
-inline void tcp_client::reset(const duration& timeout) {
+inline void tcp_client::reset(const chrono::milliseconds& timeout) {
     // set timeout for the asynchronous operation.
     // @note: host name may resolve to multiple endpoints (async_connect will *iter* to loop over them), timeout applies to the entire operation
     _timer.expires_from_now(std::chrono::duration_cast< timer::duration >(timeout));
@@ -301,7 +299,7 @@ inline void tcp_client::run() {
 
 
 
-inline void tcp_client::connect(const std::string& address, int port, const duration& timeout) {
+inline void tcp_client::connect(const std::string& address, int port, const chrono::milliseconds& timeout) {
     // resolve host name/port(service) to a list of endpoints.
     boost::asio::ip::tcp::resolver::iterator iter = boost::asio::ip::tcp::resolver(_io).resolve(address, std::to_string(port), _error);
 
@@ -350,7 +348,7 @@ inline void tcp_client::disconnect() {
 
 
 template < typename Buffer >
-inline void tcp_client::read(Buffer& buffer, const duration& timeout) {
+inline void tcp_client::read(Buffer& buffer, const chrono::milliseconds& timeout) {
     // // set timeout for the asynchronous operation.
     // // @note: async_read will populate entire buffer, timeout applies to the entire operation (*Size* reads from remote host)
     // _timer.expires_from_now(timeout);
@@ -382,7 +380,7 @@ inline void tcp_client::read(Buffer& buffer, const duration& timeout) {
 
 
 template < int Size >
-inline tcp_client::static_buffer< Size > tcp_client::read(const duration& timeout) {
+inline tcp_client::static_buffer< Size > tcp_client::read(const chrono::milliseconds& timeout) {
     static_buffer< Size > buffer;
     read(buffer, timeout);  // delegate to overload implementation
     return buffer;
@@ -391,7 +389,7 @@ inline tcp_client::static_buffer< Size > tcp_client::read(const duration& timeou
 
 
 template < typename Buffer >
-inline void tcp_client::read_until(char stop, Buffer& buffer, const duration& timeout) {
+inline void tcp_client::read_until(char stop, Buffer& buffer, const chrono::milliseconds& timeout) {
     // // set timeout for the asynchronous operation.
     // // @note: async_read will populate entire buffer, timeout applies to the entire operation (*Size* reads from remote host)
     // _timer.expires_from_now(timeout);
@@ -421,7 +419,7 @@ inline void tcp_client::read_until(char stop, Buffer& buffer, const duration& ti
 
 
 
-inline tcp_client::dynamic_buffer tcp_client::read_until(char stop, const duration& timeout) {
+inline tcp_client::dynamic_buffer tcp_client::read_until(char stop, const chrono::milliseconds& timeout) {
     dynamic_buffer buffer;
     read_until(stop, buffer, timeout);  // delegate to overload implementation
     return buffer;
@@ -430,7 +428,7 @@ inline tcp_client::dynamic_buffer tcp_client::read_until(char stop, const durati
 
 
 template < typename Buffer >
-inline void tcp_client::write(const Buffer& data, const duration& timeout) {
+inline void tcp_client::write(const Buffer& data, const chrono::milliseconds& timeout) {
     // // set timeout for the asynchronous operation.
     // // @note: async_read will populate entire buffer, timeout applies to the entire operation (*Size* reads from remote host)
     // _timer.expires_from_now(timeout);
@@ -463,12 +461,14 @@ inline void tcp_client::write(const Buffer& data, const duration& timeout) {
 inline bool tcp_client::check_timeout() {
     // check whether the timeout has passed
     if (_timer.expires_at() <= std::chrono::high_resolution_clock::now()) {
+    // if (_timer.expires_at() <= boost::asio::deadline_timer::traits_type::now()) {
         // if the timeout has expired, socket is closed, aborting any ongoing asynchronous operations.
         // ongoing run() calls will return.
+
+        // if (_socket.is_open()) { _socket.close(); }
         _socket.close(_error);
 
         // disable timeout until a new connection is established
-        // _timer.expires_at(boost::posix_time::pos_infin);
         reset();
 
         // throw timed_out exception

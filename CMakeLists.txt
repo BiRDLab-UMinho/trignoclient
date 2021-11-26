@@ -100,7 +100,7 @@ add_library(${PROJECT_NAME}
     # src/recorder.cpp
     # src/exporter.cpp
     # src/logger.cpp
-    src/basic_protocol.cpp
+    # src/basic_protocol.cpp
     # # data structures
     src/sample.cpp
     src/frame.cpp

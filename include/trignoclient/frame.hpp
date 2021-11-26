@@ -20,7 +20,6 @@
 #include <iostream>
 #include <memory>
 #include <utility>
-#include <iostream>
 #include "std/indexer.hpp"    // std::index
 #include "std/not_implemented.hpp" // std::not_implemented
 #include "sensor.hpp"         // trigno::sensor::ID

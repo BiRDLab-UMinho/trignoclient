@@ -4,6 +4,7 @@
 #include <string>
 #include <mutex>
 #include "std/basic_executor.hpp"    // std::basic_timed_executor
+#include "duration.hpp"              // trigno::Duration
 
 namespace trigno::tools {
 
@@ -15,10 +16,10 @@ class Logger : public std::basic_timed_executor {
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new instance.
     ///
-    /// @param[in]  message_delay   Delay between message output.
+    /// @param[in]  message_delay   Delay between message output. Defaults to 1000 (1s).
     /// @param[in]  message_format  Message format on which to print e.g. "%f seconds remaining!"
     ///
-    explicit Logger(float message_delay = 0.0, const std::string& message_format = "");
+    explicit Logger(const Duration& message_delay = Duration(1000), const std::string& message_format = "");
 
  protected:
     //--------------------------------------------------------------------------
@@ -29,7 +30,7 @@ class Logger : public std::basic_timed_executor {
     //--------------------------------------------------------------------------
     /// @brief      Delay between message output (if any).
     ///
-    float _message_delay;
+    const Duration _message_delay;
 
     //--------------------------------------------------------------------------
     /// @brief      Formatted message to output during wait.

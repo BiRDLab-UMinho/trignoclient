@@ -1,5 +1,11 @@
-/// @file sensor.hpp
-/// @brief This file is marvelous.
+//------------------------------------------------------------------------------
+/// @file       sensor.hpp
+/// @author     João André
+///
+/// @brief      Header file providing declaration & definition of Sensor class holding static global definitions and
+///             general purpose functions around sensor identifers & labels.
+///
+//------------------------------------------------------------------------------
 
 #ifndef TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_SENSOR_HPP_
 #define TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_SENSOR_HPP_
@@ -36,12 +42,13 @@ enum ID {
 };
 
 
-// class ID {
+// class Sensor {
+//  public:
+    
+//     using List = std::vector< ID >;
 
-//     ID(size_t idx) { }
 
-
-//     enum {
+//     enum ID {
 //         _1 = 0,
 //         _2,
 //         _3,
@@ -62,9 +69,26 @@ enum ID {
 //         MAX = _16
 //     };
 
-//     operator int();
-//     operator size_t();
-// }
+
+//     using Label = std::string;
+
+//     using Labels = std::vector< Label >;
+
+//     inline bool find(ID id, const sensor::List& sensors) {
+//         for (const auto& sensor : sensors) {
+//             if (sensor == id) {
+//                 return true;
+//             }
+//         }
+//         return false;
+//     }
+
+//  private:
+//     static List _all();
+
+//  public:
+//     static const List all = _all();
+// };
 
 
 

@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "std/duration.hpp"      // std::duration
+#include "duration.hpp"          // trigno::Duration
 #include "interface.hpp"         // trigno::network::Interface
 #include "configuration.hpp"     // trigno::network::MultiSensorConfiguration, ...
 #include "emg_data_client.hpp"   // trigno::network::EMGDataClient
@@ -34,10 +34,10 @@ class Client {
     /// @param[in]  aux_data_port  AUX data port. Defaults to Trigno's defaults.
     /// @param[in]  timeout        Timeout value (s) to abort connection.
     ///
-    explicit Client(const std::string& address, size_t command_port  = ConnectionConfiguration::COMMAND_PORT,
-                                                size_t emg_data_port = ConnectionConfiguration::EMG_DATA_PORT,
-                                                size_t aux_data_port = ConnectionConfiguration::AUX_DATA_PORT,
-                                                const std::duration& timeout = std::duration(ConnectionConfiguration::CONNECT_TIMEOUT));
+    explicit Client(const std::string& address, size_t command_port    = ConnectionConfiguration::COMMAND_PORT,
+                                                size_t emg_data_port   = ConnectionConfiguration::EMG_DATA_PORT,
+                                                size_t aux_data_port   = ConnectionConfiguration::AUX_DATA_PORT,
+                                                const Duration& timeout = Duration(ConnectionConfiguration::CONNECT_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Destroys the object.
@@ -56,7 +56,7 @@ class Client {
     void initialize(const std::string& address, size_t command_port  = ConnectionConfiguration::COMMAND_PORT,
                                                 size_t emg_data_port = ConnectionConfiguration::EMG_DATA_PORT,
                                                 size_t aux_data_port = ConnectionConfiguration::AUX_DATA_PORT,
-                                                const std::duration& timeout = std::duration(ConnectionConfiguration::CONNECT_TIMEOUT));
+                                                const Duration& timeout = Duration(ConnectionConfiguration::CONNECT_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Disconnects from server, closing underlying network (TCP/IP) clients.
@@ -92,17 +92,17 @@ class Client {
     //--------------------------------------------------------------------------
     /// @brief      Sensor configuration handler, wrapping around query & command interface to provide high-level Trigno sensor parametrization.
     ///
-    /// @note       std::close_index<> is an STL-like container adapter that provides high-level labelling functionalities over a std::vector.
-    ///             Allows a more intuitive interface when handle multiple labelled sensors.
+    /// @note       LabelledSet class template provides an intuitive interface to handle multiple labelled sensors.
     ///
-    MultiSensorConfiguration sensors;
+    ConnectionConfiguration connection;
 
     //--------------------------------------------------------------------------
     /// @brief      Sensor configuration handler, wrapping around query & command interface to provide high-level Trigno sensor parametrization.
     ///
-    /// @note       LabelledSet class template provides an intuitive interface to handle multiple labelled sensors.
+    /// @note       std::close_index<> is an STL-like container adapter that provides high-level labelling functionalities over a std::vector.
+    ///             Allows a more intuitive interface when handle multiple labelled sensors.
     ///
-    ConnectionConfiguration connection;
+    MultiSensorConfiguration sensors;
 };
 
 }  // namespace trigno::network

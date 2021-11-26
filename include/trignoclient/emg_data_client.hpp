@@ -2,6 +2,7 @@
 #define TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_EMGDATACLIENT_HPP_
 
 #include <string>
+#include "duration.hpp"             // trigno::Duration
 #include "basic_data_client.hpp"    // trigno::network::BasicDataClient
 #include "configuration.hpp"        // trigno::network::MultiSensorConfiguration, trigno::network::ConnectionConfiguration::EMG_DATA_CHANNEL
 #include "frame.hpp"                // trigno::Frame
@@ -13,8 +14,6 @@ namespace trigno::network {
 ///
 class EMGDataClient: public BasicDataClient {
  public:
-    using BasicDataClient::Timeout;
-
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new (idle) instance.
     ///
@@ -32,7 +31,7 @@ class EMGDataClient: public BasicDataClient {
     /// @param[in]  emg_data_port    EMG data channel port.
     /// @param[in]  timeout          Timeout value (s) to abort connection.
     ///
-    explicit EMGDataClient(MultiSensorConfiguration* configuration, const std::string& address, size_t emg_data_port = ConnectionConfiguration::EMG_DATA_PORT, const Timeout& timeout = Timeout(ConnectionConfiguration::CONNECT_TIMEOUT));
+    explicit EMGDataClient(MultiSensorConfiguration* configuration, const std::string& address, size_t emg_data_port = ConnectionConfiguration::EMG_DATA_PORT, const Duration& timeout = Duration(ConnectionConfiguration::CONNECT_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Establishes a connection (TCP/IP) to a Trigno server @*server_address*.
@@ -45,7 +44,7 @@ class EMGDataClient: public BasicDataClient {
     ///
     /// @note       Overload provided in order to override default data port value.
     ///
-    void connect(const std::string& address, size_t port = ConnectionConfiguration::EMG_DATA_PORT, const Timeout& timeout = Timeout(ConnectionConfiguration::CONNECT_TIMEOUT)) override;
+    void connect(const std::string& address, size_t port = ConnectionConfiguration::EMG_DATA_PORT, const Duration& timeout = Duration(ConnectionConfiguration::CONNECT_TIMEOUT)) override;
 
     //--------------------------------------------------------------------------
     /// @brief      Resets client status (frame counter, sensor configuration and sample rate).

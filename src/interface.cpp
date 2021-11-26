@@ -1,7 +1,8 @@
 #include <string>
 #include <thread>
 #include <iostream>
-// #include "std/tcp_client.hpp" // std::tcp_client
+#include "std/tcp_client.hpp" // std::tcp_client
+#include "duration.hpp"       // trigno::Duration
 #include "configuration.hpp"  // trigno::network::ConnectionConfiguration
 #include "interface.hpp"
 
@@ -18,9 +19,10 @@ const std::string Interface::termination_word = "\r\n";
 
 
 
-Interface::Interface(const std::string& address, size_t port, const Interface::Timeout& timeout) {
+Interface::Interface(const std::string& address, size_t port, const Duration& timeout) {
     /* ... */
     connect(address, port, timeout);
+    printf("IIIIIII\n");
 }
 
 
@@ -31,13 +33,16 @@ const std::string& Interface::version() const {
 
 
 
-void Interface::connect(const std::string& address, size_t port, const Interface::Timeout& timeout) {
+void Interface::connect(const std::string& address, size_t port, const Duration& timeout) {
+    std::cout << "2.5." << std::endl;
+
     try {
         _network.connect(address, port, timeout);
     } catch (boost::system::system_error& error) {  // or boost::system::system_error -> typedef this!
         std::cout << "Unable to connect to server:\n" << error.what() << std::endl;
         // throw std::runtime_error("Failed connect!");
     }
+    std::cout << "3." << std::endl;
 
     try {
         _protocol_version = std::string(_network.read_until('\n').data());
@@ -45,6 +50,8 @@ void Interface::connect(const std::string& address, size_t port, const Interface
     } catch (boost::system::system_error&) {  // or boost::system::system_error -> typedef this!
         std::cout << "Unable to parse Network Protocol Version" << std::endl;
     }
+    std::cout << "4." << std::endl;
+
 }
 
 
@@ -55,7 +62,7 @@ void Interface::disconnect() {
 
 
 
-void Interface::query(const std::string& query, std::string* response, const Interface::Timeout& timeout) {
+void Interface::query(const std::string& query, std::string* response, const Duration& timeout) {
     // add stop char to query
     // @note: stop char is protocol-specific
     std::string stop = "";
@@ -80,7 +87,7 @@ void Interface::query(const std::string& query, std::string* response, const Int
 
 
 
-std::string Interface::query(const std::string& query, const Interface::Timeout& timeout) {
+std::string Interface::query(const std::string& query, const Duration& timeout) {
     std::string response;
     this->query(query, &response, timeout);
     return response;
@@ -88,7 +95,7 @@ std::string Interface::query(const std::string& query, const Interface::Timeout&
 
 
 
-bool Interface::command(const std::string& command, const std::string& success_response, const Interface::Timeout& timeout) {
+bool Interface::command(const std::string& command, const std::string& success_response, const Duration& timeout) {
     std::string response;
     try {
         if (success_response.empty()) {
@@ -110,7 +117,7 @@ bool Interface::command(const std::string& command, const std::string& success_r
 
 
 
-bool Interface::waitFor(const std::string& target, const Interface::Timeout& timeout, size_t max_attempts) {
+bool Interface::waitFor(const std::string& target, const Duration& timeout, size_t max_attempts) {
     for (int rep = 0; rep < max_attempts; rep++) {
         auto buffer   = _network.read_until('\n', timeout);
         auto response = std::string(buffer.data());

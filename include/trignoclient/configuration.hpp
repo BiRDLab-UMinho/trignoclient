@@ -202,11 +202,16 @@ class SensorConfiguration : public BasicConfigurator {
     ///
     bool setBandwidth(bool narrow);
 
+    //--------------------------------------------------------------------------
+    /// @brief      Forward declaration of MultiSensorConfiguration as friend class, in order to provide access to protected members.
+    ///
+    friend class MultiSensorConfiguration;
+
  protected:
     //--------------------------------------------------------------------------
     /// @brief      Sensor ID.
     ///
-    const sensor::ID _id;
+    sensor::ID _id;
 
     //--------------------------------------------------------------------------
     /// @brief      Pair status.
@@ -522,14 +527,14 @@ class ConnectionConfiguration : public BasicConfigurator {
     ///
     /// @todo       Declare as dynamic parameter?
     ///
-    static constexpr float CONNECT_TIMEOUT = 2.0 /*seconds*/;
+    static constexpr int CONNECT_TIMEOUT = 1000 /* milliseconds */;
 
     //--------------------------------------------------------------------------
     /// @brief      Timeout value (seconds) when reading/writing from/to TCP sockets.
     ///
     /// @todo       Declare as dynamic parameter?
     ///
-    static constexpr float IO_TIMEOUT = 0.01 /*seconds*/;
+    static constexpr int IO_TIMEOUT = 10 /* milliseconds */;
 
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new instance.

@@ -6,7 +6,6 @@
 #include <mutex>
 #include <atomic>
 #include <thread>
-#include "std/duration.hpp"              // std::duration
 #include "std/basic_executor.hpp"        // std::basic_executor
 #include "configuration.hpp"             // trigno::network::MultiSensorConfiguration
 #include "basic_sequence_processor.hpp"  // trigno::tools::BasicSequenceProcessor

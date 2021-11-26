@@ -11,21 +11,19 @@
 namespace trigno::network {
 
 BasicDataClient::BasicDataClient(size_t channels, MultiSensorConfiguration* configuration) :
-    _buffer(channels * sizeof(BasicDataClient::DataValue) /* == 4 bytes p/ channel */),
+    _buffer(channels * sizeof(BasicDataClient::DataValue) /* == e.g. float is 4 bytes p/ channel */),
     _configuration(configuration),
     _sample_rate(0.0) {
         /* ... */
-        reset();
 }
 
 
 
 BasicDataClient::BasicDataClient(size_t channels, MultiSensorConfiguration* configuration, const std::string& address, size_t port, const BasicDataClient::Timeout& timeout) :
-    _buffer(channels * sizeof(BasicDataClient::DataValue) /* == 4 bytes p/ channel */),
+    _buffer(channels * sizeof(BasicDataClient::DataValue) /* == e.g. float is 4 bytes p/ channel */),
     _configuration(configuration),
     _sample_rate(0.0) {
         /* ... */
-        reset();
         connect(address, port, timeout);
 }
 
@@ -40,6 +38,7 @@ BasicDataClient::~BasicDataClient() {
 
 void BasicDataClient::connect(const std::string& address, size_t port, const BasicDataClient::Timeout& timeout) {
     _network.connect(address, port, timeout);
+    reset();
 }
 
 
@@ -52,7 +51,7 @@ void BasicDataClient::disconnect() {
 
 void BasicDataClient::reset() {
     _frame_idx = 0;
-    _configuration->get();
+    // _configuration->get();
 }
 
 

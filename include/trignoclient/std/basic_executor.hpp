@@ -27,7 +27,6 @@
 #include <future>
 #include <utility>
 #include <boost/asio.hpp>
-#include "duration.hpp"  // std::duration
 
 namespace std {
 
@@ -225,7 +224,7 @@ class basic_timed_executor : public basic_executor {
     ///
     /// @param[in]  duration  Duration to run operation for (in seconds).
     ///
-    void run(const duration& time);
+    void run(const chrono::milliseconds& time);
 
     //--------------------------------------------------------------------------
     /// @brief      Launches a timed operation asynchronously (in the background), not blocking/waiting for its completion.
@@ -234,7 +233,7 @@ class basic_timed_executor : public basic_executor {
     ///
     /// @note       Operation keeps executing independent of main thread, even if it exits/finishes @ different times.
     ///
-    void launch(const duration& time);
+    void launch(const chrono::milliseconds& time);
 
     //--------------------------------------------------------------------------
     /// @brief      Waits for execution to finish.
@@ -255,7 +254,7 @@ class basic_timed_executor : public basic_executor {
     ///
     /// @return     Time remaining (in us).
     ///
-    template < typename DurationType = duration >
+    template < typename DurationType = chrono::milliseconds >
     DurationType remaining() const noexcept;
 
  protected:
@@ -272,7 +271,7 @@ class basic_timed_executor : public basic_executor {
     //--------------------------------------------------------------------------
     /// @brief      Resets timer to *time* & starts counting.
     ///
-    void reset(const duration& time);
+    void reset(const chrono::milliseconds& time);
 
     //--------------------------------------------------------------------------
     /// @brief      Future instance holding result of timer call.
@@ -299,7 +298,7 @@ inline basic_timed_executor::basic_timed_executor() :
 
 
 
-inline void basic_timed_executor::run(const duration& time) {
+inline void basic_timed_executor::run(const chrono::milliseconds& time) {
     // wait(); // wait for previous execution if active!
     reset(time);
     run();
@@ -307,7 +306,7 @@ inline void basic_timed_executor::run(const duration& time) {
 
 
 
-inline void basic_timed_executor::launch(const duration& time) {
+inline void basic_timed_executor::launch(const chrono::milliseconds& time) {
     // wait(); // wait for previous execution if active!
     reset(time);
     launch();
@@ -329,7 +328,7 @@ inline bool basic_timed_executor::active() const {
 
 
 
-inline void basic_timed_executor::reset(const duration& time) {
+inline void basic_timed_executor::reset(const chrono::milliseconds& time) {
     // reset timer and call async_wait
     _timer.expires_after(std::chrono::duration_cast< timer::duration >(time));
     _timer.async_wait([this](const boost::system::error_code&) { /* no need to do anything */ });

@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 #include "std/tcp_client.hpp"  // std::tcp_client
-#include "std/duration.hpp"    // std::duration
+#include "duration.hpp"        // trigno::Duration
 #include "configuration.hpp"   // trigno::network::MultiSensorConfiguration
 #include "frame.hpp"           // trigno::Frame
 #include "sequence.hpp"        // trigno::Sequence
@@ -49,7 +49,7 @@ class BasicDataClient {
     ///
     /// @note       Compatible std::chrono literals (cf. https://en.cppreference.com/w/cpp/chrono/operator%22%22s).
     ///
-    using Timeout = std::duration;
+    using Timeout = std::chrono::milliseconds;
 
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new (idle) instance.
@@ -69,7 +69,7 @@ class BasicDataClient {
     /// @param[in]  port             Data channel service/port. Cf. Trigno User Manual for default port allocation.
     /// @param[in]  timeout          Timeout value (ms) to abort connection.
     ///
-    explicit BasicDataClient(size_t channels, MultiSensorConfiguration* configuration, const std::string& address, size_t port, const Timeout& timeout = Timeout(ConnectionConfiguration::CONNECT_TIMEOUT));
+    explicit BasicDataClient(size_t channels, MultiSensorConfiguration* configuration, const std::string& address, size_t port, const Duration& timeout = Duration(ConnectionConfiguration::CONNECT_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Destroys the object.
@@ -85,7 +85,7 @@ class BasicDataClient {
     ///
     /// @throws     std::runtime_error if connection is not possible (no Trigno server @*address* or timeout).
     ///
-    virtual void connect(const std::string& address, size_t port, const Timeout& timeout = Timeout(ConnectionConfiguration::CONNECT_TIMEOUT));
+    virtual void connect(const std::string& address, size_t port, const Duration& timeout = Duration(ConnectionConfiguration::CONNECT_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Closes the connection (TCP/IP) to a Trigno server @*server_address*, if connected.
@@ -115,12 +115,12 @@ class BasicDataClient {
     ///             Base class is agnostic as to how to strucut a data frame (e.g. EMG vs Aux data)
     ///
     template < typename T = Frame::Stamped >
-    T read(const sensor::List& sensors = sensor::all, const Timeout& timeout = Timeout(ConnectionConfiguration::IO_TIMEOUT));
+    T read(const sensor::List& sensors = sensor::all, const Duration& timeout = Duration(ConnectionConfiguration::IO_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Reads data while populating an existing *Frame* instabce with updated values.
     ///
-    /// @param[out] out      Output Frame instance to assign.
+    /// @param[out] out      Output Frame instance to assign.   
     /// @param[in]  sensors  Sensors which resulting frame holds data from.
     ///                      Only those which are active are considered, and all other remaining sensors are ignored.
     ///                      Defaults to complete sensor set i.e. reads/parses data for all active sensors.
@@ -133,7 +133,7 @@ class BasicDataClient {
     /// @throws     std::runtime_error  if timeout is exceed or connection to TCA is lost while waiting for data.
     ///
     template < typename T = Frame::Stamped >
-    void read(T* out, const sensor::List& sensors = sensor::all, const Timeout& timeout = Timeout(ConnectionConfiguration::IO_TIMEOUT));
+    void read(T* out, const sensor::List& sensors = sensor::all, const Duration& timeout = Duration(ConnectionConfiguration::IO_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Reads data directly into an existing *Frame* instance.
@@ -163,7 +163,7 @@ class BasicDataClient {
     ///                      Only those which are active are considered, and all other remaining sensors are ignored.
     ///                      Defaults to complete sensor set i.e. reads/parses data for all active sensors.
     ///
-    /// @return     Instance of trigno::Frame
+    /// @return     Newly created instance of trigno::Frame.
     ///
     /// @note       Pure virtual, derived data clients must provide their own implementation.
     ///

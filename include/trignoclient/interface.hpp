@@ -4,7 +4,7 @@
 #include <string>
 #include <thread>
 #include "std/tcp_client.hpp" // std::tcp_client
-#include "std/duration.hpp"   // std::duration
+#include "duration.hpp"       // trigno::Duration
 #include "configuration.hpp"  // trigno::network::ConnectionConfiguration
 
 namespace trigno::network {
@@ -28,11 +28,6 @@ class Interface {
     using Buffer = std::tcp_client::dynamic_buffer;
 
     //--------------------------------------------------------------------------
-    /// @brief      Duration/timeout type.
-    ///
-    using Timeout = std::duration;
-
-    //--------------------------------------------------------------------------
     /// @brief      Command termination sequence.
     ///
     /// @note       Specific to Trigno network protocol, as described in <a href="https://www.delsys.com/downloads/USERSGUIDE/trigno/sdk.pdf">Trigno Wireless System SDK</a> documentation.
@@ -52,7 +47,7 @@ class Interface {
     /// @param[in]  timeout  Timeout value (s) to abort connection.
     ///
     explicit Interface(const std::string& address, size_t port = ConnectionConfiguration::COMMAND_PORT,
-                                                   const Timeout& timeout = Timeout(ConnectionConfiguration::CONNECT_TIMEOUT));
+                                                   const Duration& timeout = Duration(ConnectionConfiguration::CONNECT_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Destroys the object.
@@ -78,7 +73,7 @@ class Interface {
     /// @throws     std::runtime_error if connection is not possible (no Trigno server @*address* or timeout).
     ///
     virtual void connect(const std::string& address, size_t port = ConnectionConfiguration::COMMAND_PORT,
-                                                     const Timeout& timeout = Timeout(ConnectionConfiguration::CONNECT_TIMEOUT));
+                                                     const Duration& timeout = Duration(ConnectionConfiguration::CONNECT_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Closes the connection (TCP/IP) to a Trigno server @*server_address*, if connected.
@@ -100,7 +95,7 @@ class Interface {
     ///
     /// @todo       Move delay argument to base class basic_tcp_client?
     ///
-    void query(const std::string& query, std::string* response, const Timeout& timeout = Timeout(ConnectionConfiguration::IO_TIMEOUT));
+    void query(const std::string& query, std::string* response, const Duration& timeout = Duration(ConnectionConfiguration::IO_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Sends a generic query/command to the TCA.
@@ -115,7 +110,7 @@ class Interface {
     ///
     /// @throw      std::invalid_argument if 'INVALID COMMAND' or 'CANNOT COMPLETE' is returned by the TCA
     ///
-    std::string query(const std::string& query, const Timeout& timeout = Timeout(ConnectionConfiguration::IO_TIMEOUT));
+    std::string query(const std::string& query, const Duration& timeout = Duration(ConnectionConfiguration::IO_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Specialized TCA query for command prompts with success check on return.
@@ -131,7 +126,7 @@ class Interface {
     ///
     /// @throw      std::invalid_argument if 'INVALID COMMAND' or 'CANNOT COMPLETE' is returned by the TCA
     ///
-    bool command(const std::string& command, const std::string& success_response = "", const Timeout& timeout = Timeout(ConnectionConfiguration::IO_TIMEOUT));
+    bool command(const std::string& command, const std::string& success_response = "", const Duration& timeout = Duration(ConnectionConfiguration::IO_TIMEOUT));
 
     //--------------------------------------------------------------------------
     /// @brief      Waits for a specific response from TCA.
@@ -142,7 +137,7 @@ class Interface {
     ///
     /// @return     True if *response* was received, false otherwise.
     ///
-    bool waitFor(const std::string& target, const Timeout& timeout = Timeout(ConnectionConfiguration::IO_TIMEOUT), size_t max_attempts = 1000);
+    bool waitFor(const std::string& target, const Duration& timeout = Duration(ConnectionConfiguration::IO_TIMEOUT), size_t max_attempts = 1000);
 
     //--------------------------------------------------------------------------
     /// @brief      Schedule (member) function call after given *delay*.
@@ -157,7 +152,7 @@ class Interface {
     /// @return     std::future< T > instance holding result of function call.
     ///
     template < typename T, typename... Args >
-    std::future< T > schedule(const Timeout& delay, const std::function< T(Interface, Args...) >& func, Args&&... args);
+    std::future< T > schedule(const Duration& delay, const std::function< T(Interface, Args...) >& func, Args&&... args);
 
  protected:
     //--------------------------------------------------------------------------
@@ -179,7 +174,7 @@ class Interface {
 
 
 template < typename T, typename... Args >
-std::future< T > Interface::schedule(const Timeout& delay, const std::function< T(Interface, Args...) >& func, Args&&... args) {
+std::future< T > Interface::schedule(const Duration& delay, const std::function< T(Interface, Args...) >& func, Args&&... args) {
     std::future< T > ret =  std::async(std::launch::async, [delay, this, func, args... ] {
         std::this_thread::sleep_for(delay);
         func(std::forward< Args >(args)...);

@@ -7,7 +7,7 @@
 
 namespace trigno::tools {
 
-Logger::Logger(float message_delay, const std::string& message_format) :
+Logger::Logger(const Duration& message_delay, const std::string& message_format) :
     std::basic_timed_executor(),
     _message_delay(message_delay),
     _message_format(message_format) {
@@ -23,7 +23,7 @@ void Logger::execute() {
         printf(_message_format.data(), remaining().count());
         fflush(stdout);
         // sleep
-        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast< size_t >(_message_delay * 1000)));
+        std::this_thread::sleep_for(_message_delay);
     }
 }
 

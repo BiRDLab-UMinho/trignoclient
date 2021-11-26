@@ -24,7 +24,11 @@ int main(int argc, char const *argv[]) {
     }
     auto server_address = std::string(argv[1]);
 
+    printf(".......................\n");
+
     network::Client client;
+
+    printf(".......................\n");
 
     // initialize client object
     std::cout << "Estabilishing connection with TCU @" << server_address.data() << std::endl;
@@ -32,6 +36,8 @@ int main(int argc, char const *argv[]) {
 
     // add local label to sensor #1 (idx -> 0)
     client.sensors.label(sensor::ID::_1) = "TRAPEZIUS";
+
+    printf("DEBUG!!!!!!!!!!!\n");
 
     // connected, get configuration
     try {
@@ -47,16 +53,16 @@ int main(int argc, char const *argv[]) {
 
         // listen to first data frame
         // out of the loop in order to be able to pass a longer timeout - trigno server has a significant delay between 'start' command and streaming begins
+        // implementation is compatible with chrono literals, which improves readability with a cleaner syntax.
         Frame emg_data = client.EMG.read(sensor::all, 5s);
 
         // listen to incoming data frames
         // loop will keep running until connection is lost (network is unreachable) or data read timeout is exceeded (user closes TCU)!
         while (1) {
             try {
-                // DataFrame emg_data;
+                // use shift operator for cleaner syntax
                 client.EMG >> emg_data;
-
-                // initialization on return
+                // alternative: initialization on return of read()
                 // auto emg_data = client.EMG.read();
 
                 // print reading for the first channel of the labelled sensor

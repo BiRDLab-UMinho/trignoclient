@@ -25,6 +25,7 @@ SensorConfiguration::SensorConfiguration(sensor::ID id, Interface* network) :
 
 
 
+
 void SensorConfiguration::reset() {
     // _paired = false;
     _active = false;
@@ -44,8 +45,6 @@ void SensorConfiguration::reset() {
 
 bool SensorConfiguration::get() {
     /* .. */
-    std::cout << "Getting info on sensor @ " << _id << "..... ";
-
     // initialize response container
     std::string response;
 
@@ -61,7 +60,6 @@ bool SensorConfiguration::get() {
 
     // if not paired, further queries will fail, reset & abort!
     if (!_paired) {
-        std::cout << "DONE!\n";
         reset();
         return false;
     }
@@ -79,7 +77,6 @@ bool SensorConfiguration::get() {
 
     // if not active, reset & abort (keep paired status to true), as garbage information will be returned on further queries
     if (!_active) {
-        std::cout << "DONE!\n";
         reset();
         return false;
     }
@@ -247,8 +244,6 @@ bool SensorConfiguration::get() {
         // ...
     }
 
-    std::cout << "DONE!\n";
-
     // ...
     return true;
 }
@@ -257,7 +252,7 @@ bool SensorConfiguration::get() {
 
 bool SensorConfiguration::set() {
     /* .. */
-    throw std::not_implemented();
+    throw std::not_implemented(__func__);
     /* .. */
     return true;
 }
@@ -266,7 +261,7 @@ bool SensorConfiguration::set() {
 
 SensorConfiguration::operator std::string() const {
     /* .. */
-    throw std::not_implemented();
+    throw std::not_implemented(__func__);
     /* .. */
 }
 
@@ -448,8 +443,6 @@ void BaseInformation::reset() {
 
 bool BaseInformation::get() {
     /* .. */
-    std::cout << "Getting info on trigno base" << std::endl;
-
     std::string response;
 
     try {
@@ -481,7 +474,7 @@ bool BaseInformation::get() {
 
 bool BaseInformation::set() {
     /* .. */
-    throw std::not_implemented();
+    throw std::not_implemented(__func__);
     /* .. */
     return true;
 }
@@ -490,7 +483,7 @@ bool BaseInformation::set() {
 
 BaseInformation::operator std::string() const {
     /* .. */
-    throw std::not_implemented();
+    throw std::not_implemented(__func__);
     /* .. */
 }
 
@@ -511,11 +504,12 @@ const std::string& BaseInformation::firmware() const noexcept {
 
 
 MultiSensorConfiguration::MultiSensorConfiguration(Interface* network) :
-    std::index< SensorConfiguration, std::string, true >() {
+    // @note base class std::index can't be empty initialized due to being locked
+    std::index< SensorConfiguration, std::string, true >(sensor::ID::MAX + 1, SensorConfiguration(sensor::ID::_1, network)) {
         // @note       sensor indexing begins at '1'
-        for (size_t id = sensor::ID::_1; id <= sensor::ID::MAX; id++) {
-            this->emplace_back(sensor::ID(id), network);
-            this->elements().back().key = "SENSOR #" + std::to_string(id);
+        for (size_t idx = sensor::ID::_1; idx <= sensor::ID::MAX; idx++) {
+            _data[idx].value()._id = static_cast< sensor::ID >(idx);
+            key(idx) = "SENSOR #" + std::to_string(idx);
         }
 }
 
@@ -588,8 +582,6 @@ void SystemControl::reset() {
 
 bool SystemControl::get() {
     /* .. */
-    std::cout << "Getting info on system configuration" << std::endl;
-
     std::string response;
 
     try {
@@ -614,7 +606,7 @@ bool SystemControl::get() {
 
 bool SystemControl::set() {
     /* .. */
-    throw std::not_implemented();
+    throw std::not_implemented(__func__);
     /* .. */
     return true;
 }
@@ -623,7 +615,7 @@ bool SystemControl::set() {
 
 SystemControl::operator std::string() const {
     /* .. */
-    throw std::not_implemented();
+    throw std::not_implemented(__func__);
     /* .. */
 }
 
@@ -681,7 +673,7 @@ bool SystemControl::stop(float delay) {
 
 bool SystemControl::quit() {
     /* .. */
-    throw std::not_implemented();
+    throw std::not_implemented(__func__);
     /* .. */
     return true;
 }
@@ -713,8 +705,6 @@ void ConnectionConfiguration::reset() {
 
 bool ConnectionConfiguration::get() {
     /* .. */
-    std::cout << "Getting connection info" << std::endl;
-
     std::string response;
 
     try {
@@ -820,7 +810,7 @@ bool ConnectionConfiguration::get() {
 
 bool ConnectionConfiguration::set() {
     /* .. */
-    throw std::not_implemented();
+    throw std::not_implemented(__func__);
     /* .. */
     return true;
 }
@@ -829,7 +819,7 @@ bool ConnectionConfiguration::set() {
 
 ConnectionConfiguration::operator std::string() const {
     /* .. */
-    throw std::not_implemented();
+    throw std::not_implemented(__func__);
     /* .. */
 }
 
@@ -889,7 +879,6 @@ bool ConnectionConfiguration::setMaster() {
         std::string response;
         _network->query("MASTER", &response);
         if (!response.empty() && response.find("NEW MASTER") != std::string::npos) {
-            std::cout << response << std::endl;
             _master = true;
         }
     } catch (std::exception&) {
@@ -906,7 +895,6 @@ bool ConnectionConfiguration::setBackwardsCompability(bool backwards_compability
         std::string response;
         _network->query("BACKWARDS COMPATIBILITY " + backwards_compability ? "ON" : "OFF", &response);
         if (!response.empty() && response.find("OK") != std::string::npos) {
-            std::cout << response << std::endl;
             _backwards_compatibility = true;
         }
     } catch (std::exception&) {
@@ -923,7 +911,6 @@ bool ConnectionConfiguration::setUpsampling(bool upsampling) {
         std::string response;
         _network->query("UPSAMPLING " + upsampling ? "ON" : "OFF", &response);
         if (!response.empty() && response.find("OK") != std::string::npos) {
-            std::cout << response << std::endl;
             _upsampling = true;
         }
     } catch (std::exception&) {
@@ -940,7 +927,6 @@ bool ConnectionConfiguration::setBigEndian(bool big_endian) {
         std::string response;
         _network->query("ENDIAN " + big_endian ? "BIG" : "LITTLE", &response);
         if (!response.empty() && response.find("OK") != std::string::npos) {
-            std::cout << response << std::endl;
             _big_endian = true;
         }
     } catch (std::exception&) {
@@ -969,25 +955,25 @@ std::ostream& operator<<(std::ostream& ostream, const trigno::network::SensorCon
     ostream << "Start Index: "      << sensor_configuration.startIndex() << std::endl;
     ostream << "Samples/frame: ";
     for (int ch = 0; ch < sensor_configuration.samplesPerFrame().size() /* == nChannels() */; ch++) {
-        std::cout << " | " << sensor_configuration.samplesPerFrame()[ch];
+        ostream << " | " << sensor_configuration.samplesPerFrame()[ch];
     }
-    std::cout << std::endl;
+    ostream << std::endl;
     ostream << "Sample rate: ";
     for (int ch = 0; ch < sensor_configuration.sampleRate().size() /* == nChannels() */; ch++) {
-        std::cout << " | " << sensor_configuration.sampleRate()[ch];
+        ostream << " | " << sensor_configuration.sampleRate()[ch];
     }
 
-    std::cout << std::endl;
+    ostream << std::endl;
     ostream << "Gain: ";
     for (int ch = 0; ch < sensor_configuration.gain().size() /* == nChannels() */; ch++) {
-        std::cout << " | " << sensor_configuration.gain()[ch];
+        ostream << " | " << sensor_configuration.gain()[ch];
     }
-    std::cout << std::endl;
+    ostream << std::endl;
     ostream << "Units: ";
     for (int ch = 0; ch < sensor_configuration.units().size() /* == nChannels() */; ch++) {
-        std::cout << " | " << sensor_configuration.units()[ch];
+        ostream << " | " << sensor_configuration.units()[ch];
     }
-    std::cout << std::endl;
+    ostream << std::endl;
     ostream << "Range: "     << (sensor_configuration.lowRange()        ? "Low (+/-5.5mV)"    : "High (+/-11mV)")  << std::endl;
     ostream << "Bandwidth: " << (sensor_configuration.narrowBandwidth() ? "Narrow (20-450Hz)" : "Wide (10-850Hz)") << std::endl;
     return ostream;

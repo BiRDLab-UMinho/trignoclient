@@ -18,7 +18,7 @@
 #include <thread>
 #include <utility>
 #include "std/details.hpp"               // std::can_apply
-#include "std/duration.hpp"              // std::duration
+#include "duration.hpp"                  // trigno::Duration
 #include "sequence.hpp"                  // trigno::Sequence
 #include "basic_sequence_processor.hpp"  // trigno::tools::BasicSequenceProcessor, trigno::tools::BasicSequenceMetric<>
 
@@ -57,14 +57,14 @@ class Iterative : public BasicSequenceProcessor {
     ///
     /// @return     Const reference to member std::duration object.
     ///
-    const std::duration& idle() const noexcept;
+    const Duration& idle() const noexcept;
 
     //--------------------------------------------------------------------------
     /// @brief      Set idle duration.
     ///
     /// @param[in]  idle_time  Time duration (as std::duration) to block execution @ end of input data.
     ///
-    void idle(const std::duration& idle_time);
+    void idle(const Duration& idle_time);
 
  protected:
     //--------------------------------------------------------------------------
@@ -89,7 +89,7 @@ class Iterative : public BasicSequenceProcessor {
     ///
     /// @note       Wait is performed once, if no new data after it exits.
     ///
-    std::duration _idle_time;
+    Duration _idle_time;
 };
 
 
@@ -106,14 +106,14 @@ Iterative< Processor >::Iterative(Args&&... args) :
 
 
 template < typename Processor >
-const std::duration& Iterative< Processor >::idle() {
+const Duration& Iterative< Processor >::idle() {
     return _idle_time;
 }
 
 
 
 template < typename Processor >
-void Iterative< Processor >::idle(const std::duration& idle_time) {
+void Iterative< Processor >::idle(const Duration& idle_time) {
     _idle_time = idle_time;
 }
 

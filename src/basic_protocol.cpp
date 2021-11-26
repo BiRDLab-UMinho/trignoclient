@@ -2,6 +2,7 @@
 #include <vector>
 #include <initializer_list>
 #include <iostream>
+#include "duration.hpp"       // trigno::Duration
 #include "client.hpp"         // trigno::network::Client
 #include "recorder.hpp"       // trigno::network::Recorder
 #include "logger.hpp"         // trigno::tools::Logger
@@ -70,7 +71,7 @@ void BasicProtocol::message(const std::string& text) {
 
 
 
-void BasicProtocol::wait(const std::duration& time, const std::string& message, float log_interval) {
+void BasicProtocol::wait(const Duration& time, const std::string& message, const Duration& log_interval) {
     // instantiate & configure waiter object (handles asynchronous timers)
     Logger reporter(log_interval, message);
     // run reporter thread synchronously (block until completed)
@@ -79,8 +80,8 @@ void BasicProtocol::wait(const std::duration& time, const std::string& message, 
 
 
 
-// trigno::Sequence BasicProtocol::record(trigno::network::BasicDataClient* data_client, const std::duration& time, const SensorList& sensors, float log_interval, Exporter* exporter = nullptr);
-trigno::Sequence BasicProtocol::record(trigno::network::BasicDataClient* data_client, const sensor::List& sensors, const std::duration& time, float log_interval) {
+// trigno::Sequence BasicProtocol::record(trigno::network::BasicDataClient* data_client, const Duration& time, const SensorList& sensors, const Duration& log_interval, Exporter* exporter = nullptr);
+trigno::Sequence BasicProtocol::record(trigno::network::BasicDataClient* data_client, const sensor::List& sensors, const Duration& time, const Duration& log_interval) {
     trigno::Sequence out;
     // instantiate recorder for given client
     // @note       trigno::tools::Recorder handles exporting!
@@ -110,7 +111,7 @@ void BasicProtocol::save(trigno::Sequence& data, const std::string& path, const 
 
 
 
-std::string BasicProtocol::prompt(const std::string& query, float timeout) {
+std::string BasicProtocol::prompt(const std::string& query, const Duration& timeout) {
     // print query/message
     std::cout << query << std::endl;
     // get user response (block until user presses 'Enter' a.k.a. '\n')

@@ -17,7 +17,7 @@ Client::Client() :
 
 
 
-Client::Client(const std::string& address, size_t command_port, size_t emg_data_port, size_t aux_data_port, const std::duration& timeout) :
+Client::Client(const std::string& address, size_t command_port, size_t emg_data_port, size_t aux_data_port, const Duration& timeout) :
     system(&server),
     base(&server),
     sensors(&server),
@@ -37,7 +37,7 @@ Client::~Client() {
 
 
 
-void Client::initialize(const std::string& address, size_t command_port, size_t emg_data_port, size_t aux_data_port, const std::duration& timeout) {
+void Client::initialize(const std::string& address, size_t command_port, size_t emg_data_port, size_t aux_data_port, const Duration& timeout) {
     // establish TCP/IP connections
     server.connect(address, command_port, timeout);
     EMG.connect(address, emg_data_port, timeout);
