@@ -24,7 +24,7 @@ class Exporter : public BasicSequenceProcessor {
     /// @param[in]  file  Local target file.
     /// @param[in]  data  Input sequence, required to remove exported frames. Defaults to nullptr i.e. frames are only exported, but kept in memory.
     ///
-    explicit Exporter(std::string& path, Sequence* data = nullptr);
+    explicit Exporter(const std::string& path, Sequence* data = nullptr);
 
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new instance, initializing a file @ given *path* with matching header from *sensors*.
@@ -33,7 +33,7 @@ class Exporter : public BasicSequenceProcessor {
     /// @param[in]  sensors  Sensors used to initialize file header
     /// @param[in]  data     Input sequence, required to remove exported frames. Defaults to nullptr i.e. frames are only exported, but kept in memory.
     ///
-    explicit Exporter(std::string& path, const sensor::List& sensors, Sequence* data = nullptr);
+    explicit Exporter(const std::string& path, const sensor::List& sensors, Sequence* data = nullptr);
 
     //--------------------------------------------------------------------------
     /// @brief      Destroys the object.    

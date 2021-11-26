@@ -163,6 +163,29 @@ Sequence Sequence::load(const std::string& path, const std::string& delimiter) {
     return data;
 }
 
+
+
+// Sequence Sequence::write(const std::string& path, const std::string& header, const std::string& delimiter) {
+//     // open file & load header
+//     std::ofstream file(path);
+
+//     file << header;    
+
+//     // create empty output sequence
+//     Sequence data;
+
+//     // loop over file content directly, in order to avoid reparsing the header & multiple file open & close
+//     for (std::string line; std::getline(file, line); ) {
+//         // append empty frame to back of sequence
+//         data << Frame::initialize< Frame::Stamped >(header, delimiter);
+//         // populate frame in-place
+//         Frame::load(data.back(), line, delimiter);
+//     }
+
+//     return data;
+// }
+
+
 }  // namespace trigno
 
 //------------------------------------------------------------------------------

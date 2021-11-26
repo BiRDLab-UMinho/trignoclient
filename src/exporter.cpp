@@ -40,10 +40,10 @@ Exporter::~Exporter() {
 
 
 
-std::ofstream Exporter::file(const std::string& path, const sensor::List& configuration) {
+std::ofstream Exporter::file(const std::string& path, const sensor::List& sensors) {
     std::ofstream file(path);
     // _file.open(_path, std::ofstream::out | std::ofstream::app);
-    _file.open(_path, std::ofstream::out);  // no 'app' flag, file is cleared
+    file.open(path, std::ofstream::out);  // no 'app' flag, file is cleared
 
     // ...
     throw std::not_implemented(__func__);
@@ -59,18 +59,13 @@ void Exporter::execute() {
         // lock mutex to access shared resources
         std::unique_lock< std::mutex > lock(_mutex);
         // write data frame to stream (trigno::Frame already provides << operator overload)
-        _file  << _in->front() << std::endl;
+        _file  << frame << std::endl;
+        // erase frame if valid source pointer
+        // if (_data != nullptr) {
+        //     _data.erase(_it);
+        // }
     }
     _file.close();
-    // discard written frames
-    if (_discard == true) {
-        // lock mutex to access shared resources
-        std::unique_lock< std::mutex > lock(_mutex);
-        // pop batch frames from front of queue -> discarding before closing file may lead to data loss!
-        _in->discard(_range.size());
-    }
-
-    _range++;
 }
 
 }  // namespace trigno::tools

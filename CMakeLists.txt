@@ -95,12 +95,12 @@ add_library(${PROJECT_NAME}
     src/basic_configurator.cpp
     src/basic_data_client.cpp
     src/emg_data_client.cpp
-    # src/aux_data_client.cpp
+    src/aux_data_client.cpp
     # tools
-    # src/recorder.cpp
-    # src/exporter.cpp
-    # src/logger.cpp
-    # src/basic_protocol.cpp
+    src/recorder.cpp
+    src/exporter.cpp
+    src/logger.cpp
+    src/basic_protocol.cpp
     # # data structures
     src/sample.cpp
     src/frame.cpp

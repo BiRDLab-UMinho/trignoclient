@@ -210,6 +210,8 @@ class Frame : public std::index< Sample > {
     ///
     /// @return     Instance of std::string with sensor labels separated by *delimiter*.
     ///
+    /// @todo       Move to sensor namespace as free function.
+    ///
     template < typename T = Frame::Stamped >
     static std::string header(const T& frame, const std::string& delimiter = ",");
 
