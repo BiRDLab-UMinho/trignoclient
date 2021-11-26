@@ -1,3 +1,12 @@
+//------------------------------------------------------------------------------
+/// @file       emg_data_client.hpp
+/// @author     João André
+///
+/// @brief      Header file providing declaration of trigo::network::EMGDataClient, the specialized data client that receives and parses
+///             EMG data from remote Delsys Trigno systems.
+///
+//------------------------------------------------------------------------------
+
 #ifndef TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_EMGDATACLIENT_HPP_
 #define TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_EMGDATACLIENT_HPP_
 

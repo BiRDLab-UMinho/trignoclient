@@ -10,8 +10,8 @@ Client::Client() :
     base(&server),
     sensors(&server),
     connection(&server),
-    EMG(&sensors) {  // ,
-    // AUX(&sensors) {
+    EMG(&sensors),
+    AUX(&sensors) {
         /* ... */
 }
 
@@ -22,8 +22,8 @@ Client::Client(const std::string& address, size_t command_port, size_t emg_data_
     base(&server),
     sensors(&server),
     connection(&server),
-    EMG(&sensors) {  // ,
-    // AUX(&sensors) {
+    EMG(&sensors),
+    AUX(&sensors) {
         /* ... */
         initialize(address, command_port, emg_data_port, aux_data_port, timeout);
 }

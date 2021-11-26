@@ -1,65 +1,73 @@
 #include <string>
 #include <vector>
-#include "configuration.hpp"    // trigno::network::MultiSensorConfiguration
-#include "data_frame.hpp"       // trigno::DataFrame
+#include "sensor.hpp"           // trigno::Sensor
+#include "configuration.hpp"    // trigno::network::MultiSensorConfiguration, trigno::network::ConnectionConfiguration
+#include "frame.hpp"            // trigno::Frame
 #include "aux_data_client.hpp"
 
 namespace trigno::network {
 
-AUXDataClient::AUXDataClient(const std::string& server_address, const MultiSensorConfiguration* configuration, int aux_port, int connect_timeout) :
-    BasicDataClient(server_address, configuration, emg_port, connect_timeout) {
+AUXDataClient::AUXDataClient(MultiSensorConfiguration* configuration) :
+    BasicDataClient(ConnectionConfiguration::AUX_DATA_CHANNELS_PER_SENSOR * sensor::ID::MAX, configuration) {
         /* ... */
 }
 
 
 
-AUXDataClient::~AUXDataClient() {
-    /* ... */
+AUXDataClient::AUXDataClient(MultiSensorConfiguration* configuration, const std::string& address, size_t emg_data_port, const AUXDataClient::Timeout& timeout) :
+    BasicDataClient(ConnectionConfiguration::AUX_DATA_CHANNELS_PER_SENSOR * sensor::ID::MAX, configuration, address, emg_data_port, timeout) {
+        /* ... */
+        // no need to connect, BasicDataClient establishes connection on constructor!
 }
 
 
 
-void AUXDataClient::read(DataFrame* out, size_t timeout_ms) {
-    if (out != nullptr) {
-        // ...
-        if (out->empty()) {
-            *out = read(timeout_ms);
+void AUXDataClient::connect(const std::string& address, size_t port, const AUXDataClient::Timeout& timeout) {
+    // delegates to base implementation (but with different default arguments!)
+    BasicDataClient::connect(address, port, timeout);
+}
+
+
+
+void AUXDataClient::reset() {
+    // call base class reset() implementation
+    BasicDataClient::reset();
+    // Trigno systems sample all data channels on each port @ same sample rate
+    // therefore only need to check the sample rate for the first AUX channel on the first active sensor
+    for (const auto& sensor : * _configuration) {
+        if (sensor.isActive() && sensor.nAUXChannels()) {
+            _sample_rate = sensor.sampleRate().front();  // first value is assured to be AUX channel!
             return;
         }
-        // check if frame has full size? otherwise may be invalid
-        // ...
-        // for each sensor
-        for (auto& sensor : *out) {
-            // for each channel
-            for (auto& channel : sensor) {
-                channel = readValue(timeout_ms);
-            }
-        }
     }
-    throw std::invalid_argument("");
+    throw std::runtime_error("[" + std::string(__func__) + "] No active AUX channels!");
 }
 
 
 
-DataFrame AUXDataClient::read(size_t timeout_ms) {
-    // instantiate new data frame
-    DataFrame out;
-    std::cout << "______" << std::endl;
-    // for each sensor
-    for (int s = 0; s < _configuration->size(); s++) {
-        auto& sensor = (*_configuration)[s];
-        std::cout << "reading sensor #" << s << " [" << sensor.nAUXChannels() << " channel(s)]" << std::endl;
-        // create SensorSample instance in place
-        out.emplace_back(sensor.nAUXChannels());
-        // for each channel, read channel data from client
-        for (int ch = 0; ch < sensor.nAUXChannels(); ch++) {
-            std::cout << "reading sensor #" << s << " channel #" << ch << std::endl;
-            out.back()[ch] = readValue(timeout_ms);
+Frame AUXDataClient::buildFrame(const sensor::List& sensors) const {
+    // intialize empty _frame
+    Frame out;
+
+    // ensure sensor list has values -> empty list returns empty frame
+    // assert(sensors.size());
+
+    // parse only requested values/sensors
+    // @note configuration must be up to date!
+    for (const auto& sensor_id : sensors) {
+        // check if active, skip if not
+        if (!(*_configuration)[sensor_id].isActive()) {
+            continue;
         }
-        // assign descriptor
-        out.descriptor(s) = _configuration->descriptor(s);
-        // printf("done!\n");
+        // get start index from configuration
+        auto pos = (*_configuration)[sensor_id].startIndex();
+        // add sample to frame
+        // @note       raw data is parsed by trigno::Sample constructor
+        out.emplace_back(sensor_id, (*_configuration)[sensor_id].nAUXChannels(), &_buffer[pos * sizeof(DataValue)]);
+        // preserve sensor label in output frame
+        out.elements().back().key = _configuration->element(sensor_id).key;
     }
+
     return out;
 }
 

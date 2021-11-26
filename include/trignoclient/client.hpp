@@ -1,3 +1,12 @@
+//------------------------------------------------------------------------------
+/// @file       client.hpp
+/// @author     João André
+///
+/// @brief      Header file providing declaration of trigno::network::Client class, the main network abstraction type in *trignoclient*.
+///             Users should use Client as the main interface with remote Delsys Trigno systems. 
+///
+//------------------------------------------------------------------------------
+
 #ifndef TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_CLIENT_HPP_
 #define TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_CLIENT_HPP_
 
@@ -7,7 +16,7 @@
 #include "interface.hpp"         // trigno::network::Interface
 #include "configuration.hpp"     // trigno::network::MultiSensorConfiguration, ...
 #include "emg_data_client.hpp"   // trigno::network::EMGDataClient
-// #include "aux_data_client.hpp"      // trigno::network::AUXDataClient
+#include "aux_data_client.hpp"   // trigno::network::AUXDataClient
 
 namespace trigno::network {
 
@@ -71,7 +80,7 @@ class Client {
     //--------------------------------------------------------------------------
     /// @brief      AUX data client, hadling incoming data streamed from a Trigno SDK server.
     ///
-    // AUXDataClient AUX;
+    AUXDataClient AUX;
 
     //--------------------------------------------------------------------------
     /// @brief      Network communication handler (bidirectional), implementing basic query & command structure with a Trigno SDK server.
