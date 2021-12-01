@@ -63,7 +63,7 @@ class Sequence : public std::series< Frame, Frame::TimeStamp > /* a.k.a. std::so
     /// @brief      Constructs a new (empty) instance.
     ///
     Sequence() = default;
-
+    
     //--------------------------------------------------------------------------
     /// @brief      Discards *n_samples* older samples (@ front of container).
     ///
@@ -229,43 +229,8 @@ class Sequence : public std::series< Frame, Frame::TimeStamp > /* a.k.a. std::so
     /// @return     Instance of Signal with data for specified sensor/channel.
     ///
     static Signal extract(const Range& range, const sensor::Label& sensor_label, size_t channel = 0);
-
-    //--------------------------------------------------------------------------
-    /// @brief      Loads sequence from file (csv).
-    ///
-    /// @param[in]  path       Path to local text file w/ frame sequence information.
-    /// @param[in]  delimiter  Delimiter string. Defaults to ',' (comma-separated values)
-    ///
-    /// @return     Instance of Sequence with loaded frames.
-    ///
-    static Sequence load(const std::string& path, const std::string& delimiter = ",");
 };
 
 }  // namespace trigno
-
-
-
-//------------------------------------------------------------------------------
-/// @brief      Left shift operator overload, for output of a trigno::Sequence::Range to a text/file stream.
-///
-/// @param      ostream  Stream to write data to.
-/// @param[in]  range    Frame range to write.
-///
-/// @return     Modified output stream.
-///
-/// @note       As trigno::Sequence is implicit convertible to trigno:Sequence::Range, can be used w/ trigno::Sequence instances
-///
-std::ostream& operator<<(std::ostream& ostream, trigno::Sequence::Range range);
-
-//------------------------------------------------------------------------------
-/// @brief      Left shift operator overload, for input of a trigno::Sequence from a text/file stream.
-///
-/// @param      ostream  Stream to write data to. *Can't* be empty, otherwise there is no reference (header) on how to parse values.
-///                      If no existing frames available, initialize Sequence with \code seq << Frame::initialize(const string&)\endcode
-/// @param[in]  range    Frame range to write.
-///
-/// @return     Modified output stream.
-///
-std::istream& operator>>(std::istream& istream, trigno::Sequence& sequence);
 
 #endif  // TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_SEQUENCE_HPP_

@@ -1,3 +1,4 @@
+#include <string>
 #include <vector>
 #include <iostream>
 #include <cstring>     // std::memcpy
@@ -62,6 +63,18 @@ const float& Sample::operator[](size_t channel) const {
 
 
 
+const Sample::Container& Sample::data() const {
+    return _data;
+}
+
+
+
+Sample::operator const Container&() const {
+    return _data;
+}
+
+
+
 Sample::operator const Sample::Value&() const noexcept {
     return _data.front();
 }
@@ -101,16 +114,3 @@ std::vector< float >::const_iterator Sample::end() const {
 }
 
 }  // namespace trigno
-
-
-
-std::ostream& operator<<(std::ostream& ostream, const trigno::Sample& sample) {
-    std::string delimiter = ", ";
-    for (int ch = 0; ch < sample.size(); ch++) {
-        ostream << sample[ch];
-        if (ch < sample.size() - 1) {
-            ostream << delimiter;
-        }
-    }
-    return ostream;
-}

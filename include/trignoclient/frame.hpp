@@ -71,6 +71,20 @@ class Frame : public std::index< Sample > {
     ///
     explicit Frame(size_t n_sensors = 0, size_t n_channels = 1);
 
+    //--------------------------------------------------------------------------
+    /// @brief      Constructs a new instance, from a serialized/text input.
+    ///
+    /// @param[in]  header     Data header with sensor/channel labels.
+    /// @param[in]  data       Input data container to parse, w/ sample values for each sensor channel.
+    ///                        If empty (default), values are default-initialized.
+    /// @param[in]  delimiter  Delimiter text/character. Defaults to comma (',').
+    ///
+    /// @tparam     C       Input container type. Defaults to std::vector< Sample >. *Must* be iteratable and provide a public *size()* member.
+    ///
+    /// @note       *header* should not be confused with sensor labels (i.e. *sensor::Labels* type), as it includes a label for each channel!
+    ///
+    explicit Frame(const std::string& header, const std::vector< Sample::Value >& data, const std::string& delimiter = ",");
+
 
     Frame(const Frame& other) = default;  // { printf("cop1\n"); }
     Frame(Frame&& other) : std::index< Sample >() { _data = std::move(other._data); }  // = default;  // { printf("mov3\n"); }
@@ -146,14 +160,14 @@ class Frame : public std::index< Sample > {
     ///
     /// @throw      std::invalid_argument if input values != 1 *or* != dim().
     ///
-    void reset(const std::vector< Sample::Value >& values);
+    void set(const std::vector< Sample::Value >& values);
 
     //--------------------------------------------------------------------------
     /// @brief      Resets data without restructuring frame i.e. sets all values to a single given *value*.
     ///
     /// @param[in]  value  Value to assign to frame.
     ///
-    void reset(Sample::Value value = 0.0);
+    void set(Sample::Value value);
 
     //--------------------------------------------------------------------------
     /// @brief      Explicit declaration of find() base member to avoid shadowing by derived overloads.
@@ -201,30 +215,6 @@ class Frame : public std::index< Sample > {
     /// @todo       Use a parameter pack instead of initializer list, discarding the use of {}.
     ///
     Frame operator[](const sensor::Labels& sensor_labels) const;
-
-    //--------------------------------------------------------------------------
-    /// @brief      Constructs a text string with inidividual sensor identifiers (labels).
-    ///
-    /// @param[in]  emg_frame  Data frame with EMG data.
-    /// @param[in]  delimiter  Delimiter character. Defaults to comma (',').
-    ///
-    /// @return     Instance of std::string with sensor labels separated by *delimiter*.
-    ///
-    /// @todo       Move to sensor namespace as free function.
-    ///
-    template < typename T = Frame::Stamped >
-    static std::string header(const T& frame, const std::string& delimiter = ",");
-
-    //--------------------------------------------------------------------------
-    /// @brief      Constructs a text string with inidividual sensor values/readings.
-    ///
-    /// @param[in]  emg_frame  Data frame with EMG data.
-    /// @param[in]  delimiter  Delimiter character. Defaults to comma (',').
-    ///
-    /// @return     Instance of std::string with sensor data separated by *delimiter*.
-    ///
-    template < typename T = Frame::Stamped >
-    static std::string to_string(const T& frame, const std::string& delimiter = ",");
 
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new (empty) frame for EMG data, from system configuration.
@@ -278,40 +268,6 @@ class Frame : public std::index< Sample > {
     ///
     template < typename T = Frame::Stamped >
     static T initialize(const std::string& header, const std::string& delimiter = ",");
-
-    //--------------------------------------------------------------------------
-    /// @brief      Loads a frame from serialized content i.e. text string. Useful to parse from IO streams and/or file input.
-    ///             More versatile than left shift operator ()
-    ///
-    /// @param[in]  data       Input text w/ frame content (*delimiter*-separated values of *Sample::Value*).
-    /// @param[in]  sensors    Sensor labels. Used to attribute headers to output frame.
-    /// @param[in]  delimiter  Delimiter character. Defaults to comma (',').
-    ///
-    /// @tparam     T          Output type. One of Frame or Frame::Stamped (default).
-    ///
-    /// @throws     std::runtime_error if *input* has not enough values to populate *frame* (!= dim()).
-    ///
-    template < typename T = Frame::Stamped >
-    static void load(T& frame, const std::string& input, const std::string& delimiter = ",");
-
-    //--------------------------------------------------------------------------
-    /// @brief      Loads a frame from a local file. Wraps around initialize() and load() overload.
-    ///
-    /// @param[in]  path       Path to local file with frame content.
-    /// @param[in]  index      Frame index i.e. which frame in *path* to load, in cases where multiple files are available. Defaults to 0.
-    /// @param[in]  header     Header to use. If empty (default), first line is used to label sensor/channels of output frame.
-    /// @param[in]  delimiter  Delimiter character. Defaults to comma (',').
-    ///
-    /// @tparam     T          Output type. One of Frame or Frame::Stamped (default).
-    ///
-    /// @throws     std::runtime_error if *path* has no or invalid data @ *index*.
-    ///
-    template < typename T = Frame::Stamped >
-    T load(const std::string& path, size_t index = 0, const std::string& header = "", const std::string& delimiter = ",");
-
-
-    // template < typename T = Frame::Stamped >
-    // static bool write(const T& frame, const std::string& path);
 };
 
 
@@ -329,68 +285,6 @@ Frame::Frame(const C& source, const sensor::Labels& labels) {
     }
 }
 
-
-
-template < typename C >
-Frame::Frame(const C& source, const std::string& header) {
-    /* ... */
-    throw std::not_implemented(__func__);
-    /* ... */
-}
-
 }  // namespace trigno
-
-
-//------------------------------------------------------------------------------
-/// @brief      Left shift operator overload, for output stream operations.
-///
-/// @param      ostream    The stream to write data to.
-/// @param[in]  emg_frame  Frame instance.
-///
-/// @return     Modified output stream.
-///
-std::ostream& operator<<(std::ostream& ostream, const trigno::Frame& frame);
-
-
-
-//------------------------------------------------------------------------------
-/// @brief      Left shift operator overload, for output stream operations.
-///
-/// @param      ostream    The stream to write data to.
-/// @param[in]  emg_frame  Stamped Frame instance.
-///
-/// @return     Modified output stream.
-///
-std::ostream& operator<<(std::ostream& ostream, const trigno::Frame::Stamped& frame);
-
-
-
-//------------------------------------------------------------------------------
-/// @brief      Right shift operator overload, for input stream operations.
-///
-/// @param      ostream    The stream to get data from.
-/// @param[in]  emg_frame  Frame instance.
-///
-/// @return     Modified input stream.
-///
-/// @note       *frame* must be properly initialize to fit data on input stream.
-///             If file stream, be sure to call initialize() from local path.
-///
-std::istream& operator>>(std::istream& istream, trigno::Frame& frame);
-
-
-
-//------------------------------------------------------------------------------
-/// @brief      Right shift operator overload, for input stream operations.
-///
-/// @param      ostream    The stream to get data from.
-/// @param[in]  emg_frame  StampedFrame instance.
-///
-/// @return     Modified input stream.
-///
-/// @note       *frame* must be properly initialize to fit data on input stream.
-///             If file stream, be sure to call initialize() from local path.
-///
-std::istream& operator>>(std::istream& istream, trigno::Frame::Stamped& frame);
 
 #endif  // TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_DATAFRAME_HPP_

@@ -117,6 +117,20 @@ class Sample {
     const Value& operator[](size_t channel) const;
 
     //--------------------------------------------------------------------------
+    /// @brief      Access underlying channel data vector.
+    ///
+    /// @return     *const* reference to member container.
+    ///
+    const Container& data() const;
+
+    //--------------------------------------------------------------------------
+    /// @brief      Implicit conversion to member *Container* type.
+    ///
+    /// @return     *const* reference to member container.
+    ///
+    operator const Container&() const;
+
+    //--------------------------------------------------------------------------
     /// @brief      Conversion operator to floating point value. Returns the value of the first EMG channel.
     ///
     /// @note       Useful when only 1 channel has data, discards the need to use [0] subscript.
@@ -175,15 +189,5 @@ class Sample {
 };
 
 }  // namespace trigno
-
-//------------------------------------------------------------------------------
-/// @brief      Left shift operator overload, for output stream operations.
-///
-/// @param      ostream    The stream to write data to.
-/// @param[in]  sample     Sample instance.
-///
-/// @return     Modified data stream.
-///
-std::ostream& operator<<(std::ostream& ostream, const trigno::Sample& sample);
 
 #endif  // TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_SENSORSAMPLE_HPP_
