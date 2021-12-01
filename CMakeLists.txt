@@ -24,16 +24,16 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 ## option (interactive) to enable/disable doc generation
-option(BUILD_DOC     "Generate documentation (doxygen)" ON)
+option(BUILD_DOC     "Generate documentation (doxygen)" OFF)
 
 ## option (interactive) to enable/disable doc generation
 option(BUILD_SHARED_LIBS "Wether generated libraries are shared (default) or static" ON)
 
 ## option (interactive) to enable/disable doc generation
-option(WITH_EXAMPLES "Builds example code as executables" ON)
+option(WITH_EXAMPLES "Builds example code as executables" OFF)
 
 ## option (interactive) to enable/disable doc generation
-option(WITH_PLOTTING "Build plotting tools (requires additional dependencies)" ON)
+option(WITH_PLOTTING "Build plotting tools (requires additional dependencies)" OFF)
 
 
 
