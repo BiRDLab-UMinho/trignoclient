@@ -8,21 +8,23 @@
 
 namespace trigno::network {
 
-// std::string stop = "";
-// char CR = 13;
-// char LF = 10;
-// stop.append(1, CR);
-// stop.append(1, LF);
-// stop.append(1, CR);
-// stop.append(1, LF);
 const std::string Interface::termination_word = "\r\n";
-
-
 
 Interface::Interface(const std::string& address, size_t port, const Duration& timeout) {
     /* ... */
     connect(address, port, timeout);
-    printf("IIIIIII\n");
+}
+
+
+Interface::~Interface() {
+    /* ... */
+    disconnect();
+}
+
+
+
+bool Interface::connected() const {
+    return _network.is_connected();
 }
 
 
@@ -34,24 +36,18 @@ const std::string& Interface::version() const {
 
 
 void Interface::connect(const std::string& address, size_t port, const Duration& timeout) {
-    std::cout << "2.5." << std::endl;
-
     try {
         _network.connect(address, port, timeout);
     } catch (boost::system::system_error& error) {  // or boost::system::system_error -> typedef this!
         std::cout << "Unable to connect to server:\n" << error.what() << std::endl;
         // throw std::runtime_error("Failed connect!");
     }
-    std::cout << "3." << std::endl;
-
     try {
         _protocol_version = std::string(_network.read_until('\n').data());
         // std::cout << _protocol_version << std::endl;
     } catch (boost::system::system_error&) {  // or boost::system::system_error -> typedef this!
         std::cout << "Unable to parse Network Protocol Version" << std::endl;
     }
-    std::cout << "4." << std::endl;
-
 }
 
 

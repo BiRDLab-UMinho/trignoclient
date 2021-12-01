@@ -77,6 +77,13 @@ class BasicDataClient {
     virtual ~BasicDataClient();
 
     //--------------------------------------------------------------------------
+    /// @brief      Checks if currently connected to Trigno command server.
+    ///
+    /// @return     True if connected to Trigno command channel, false otherwise.
+    ///
+    bool connected() const;
+
+    //--------------------------------------------------------------------------
     /// @brief      Establishes a connection (TCP/IP) to a Trigno server @*server_address*
     ///
     /// @param[in]  address          Address of the machine running TCA.

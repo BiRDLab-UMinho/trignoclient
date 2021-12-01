@@ -54,6 +54,13 @@ class Client {
     virtual ~Client();
 
     //--------------------------------------------------------------------------
+    /// @brief      Checks if client is currently connected.
+    ///
+    /// @return     True if connected to all trigno data channels (command, EMG and Aux), false otherwise.
+    ///
+    bool connected() const;
+
+    //--------------------------------------------------------------------------
     /// @brief      Initialize client (connect to server & fetch system configuration)
     ///
     /// @param[in]  address        Address (IP) of the Trigno server (machine running the Trigno Control Application (TCA)).

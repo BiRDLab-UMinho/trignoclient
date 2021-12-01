@@ -52,7 +52,14 @@ class Interface {
     //--------------------------------------------------------------------------
     /// @brief      Destroys the object.
     ///
-    virtual ~Interface() = default;
+    virtual ~Interface();
+
+    //--------------------------------------------------------------------------
+    /// @brief      Checks if currently connected to Trigno command server.
+    ///
+    /// @return     True if connected to Trigno command channel, false otherwise.
+    ///
+    bool connected() const;
 
     //--------------------------------------------------------------------------
     /// @brief      Access protocol version.

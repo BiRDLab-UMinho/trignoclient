@@ -36,6 +36,12 @@ BasicDataClient::~BasicDataClient() {
 
 
 
+bool BasicDataClient::connected() const {
+    return _network.is_connected();
+}
+
+
+
 void BasicDataClient::connect(const std::string& address, size_t port, const BasicDataClient::Timeout& timeout) {
     _network.connect(address, port, timeout);
     reset();
@@ -51,7 +57,6 @@ void BasicDataClient::disconnect() {
 
 void BasicDataClient::reset() {
     _frame_idx = 0;
-    // _configuration->get();
 }
 
 
