@@ -13,6 +13,7 @@
 #ifndef TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_STD_RANGEITERATOR_HPP_
 #define TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_STD_RANGEITERATOR_HPP_
 
+#include <string>
 #include <cassert>
 #include <exception>
 #include <iterator>
@@ -39,6 +40,7 @@ class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
     using iterator_category    = typename std::iterator< std::random_access_iterator_tag, T >::iterator_category;
     using pointer              = typename std::iterator< std::random_access_iterator_tag, T >::pointer;
     using reference            = typename std::iterator< std::random_access_iterator_tag, T >::reference;
+    using const_reference      = const reference;
     using difference_type      = typename std::iterator< std::random_access_iterator_tag, T >::difference_type;
     using value_iterator       = typename Container::iterator;
     using value_const_iterator = typename Container::const_iterator;
@@ -106,7 +108,7 @@ class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
     ///
     /// @return     Reference to container value @ pos.
     ///
-    T& operator*();
+    reference operator*();
 
     //--------------------------------------------------------------------------
     /// @brief      Dereference operator.
@@ -115,18 +117,12 @@ class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
     ///
     const T& operator*() const;
 
-    template < typename oT = typename Container::value_type>
-    oT as();
-
-    template < typename oT = typename Container::value_type>
-    const oT& as() const;
-
     //--------------------------------------------------------------------------
     /// @brief      Dereference operator.
     ///
     /// @return     Reference to container value @ pos.
     ///
-    T& operator[](const typename Container::size_type pos);
+    reference operator[](const typename Container::size_type pos);
 
     //--------------------------------------------------------------------------
     /// @brief      Dereference operator.
@@ -331,23 +327,23 @@ typename Container::size_type range_iterator< Container, T >::size() const noexc
 
 
 template < typename Container, typename T >
-T& range_iterator< Container, T >::operator*() {
-    return (*_container)[_pos];
+typename range_iterator< Container, T >::reference range_iterator< Container, T >::operator*() {
+    return _container->template at< reference >(_pos);
 }
 
 
 
 template < typename Container, typename T >
 const T& range_iterator< Container, T >::operator*() const {
-    return (*_container)[_pos];
+    return _container->template at< reference >(_pos);
 }
 
 
 
 template < typename Container, typename T >
-T& range_iterator< Container, T >::operator[](const typename Container::size_type pos) {
-    if (pos < _container->size()) {
-        return (*_container)[_pos + pos];
+typename range_iterator< Container, T >::reference range_iterator< Container, T >::operator[](const typename Container::size_type pos) {
+    if ((pos + _pos) < _container->size()) {
+        return (_container->template at< T >(_pos + pos));
     }
     throw std::out_of_range("[" + std::string(__func__) + "] Invalid position!");
 }
@@ -356,8 +352,8 @@ T& range_iterator< Container, T >::operator[](const typename Container::size_typ
 
 template < typename Container, typename T >
 const T& range_iterator< Container, T >::operator[](const typename Container::size_type pos) const {
-    if (pos < _container->size()) {
-        return (*_container)[_pos + pos];
+    if ((pos + _pos) < _container->size()) {
+        return (_container->template at< T >(_pos + pos));
     }
     throw std::out_of_range("[" + std::string(__func__) + "] Invalid position!");
 }

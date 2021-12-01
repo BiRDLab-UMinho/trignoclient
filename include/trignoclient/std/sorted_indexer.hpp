@@ -109,6 +109,9 @@ class sorted_indexer : public indexer< Container, T, Locked > {
     template < typename oT = value_type >
     using const_element_range = range_iterator< const sorted_indexer< Container, T, Locked >, const oT >;
 
+    //--------------------------------------------------------------------------
+    /// @brief      Explicit declaration of base type methods required in sorted_indexer<> definition.
+    ///
     using indexer< Container, T, Locked >::begin;
     using indexer< Container, T, Locked >::end;
     using indexer< Container, T, Locked >::operator();

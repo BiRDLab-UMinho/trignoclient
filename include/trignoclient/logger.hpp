@@ -21,6 +21,11 @@ class Logger : public std::basic_timed_executor {
     ///
     explicit Logger(const Duration& message_delay = Duration(1000), const std::string& message_format = "");
 
+    //--------------------------------------------------------------------------
+    /// @brief      Destroys the object.
+    ///
+    virtual ~Logger() = default;
+
  protected:
     //--------------------------------------------------------------------------
     /// @brief      Reads & saves a single *DataFrame* from the data client

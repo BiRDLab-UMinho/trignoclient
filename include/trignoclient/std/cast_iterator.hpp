@@ -64,8 +64,6 @@ class cast_iterator : std::iterator< std::random_access_iterator_tag, T > {
     ///
     explicit cast_iterator(Container* container, unsigned int pos = 0);
 
-    // cast_iterator(const cast_iterator<Container,T>& other) { printf("copy!"); };
-
     //--------------------------------------------------------------------------
     /// @brief      Increment operator (self).
     ///
@@ -123,6 +121,11 @@ class cast_iterator : std::iterator< std::random_access_iterator_tag, T > {
     /// @brief      Conversion operator to *const* iterator of the underlying container type.
     ///
     operator typename Container::const_iterator() const;
+
+    //--------------------------------------------------------------------------
+    /// @brief      Conversion operator to analogous *const* iterator.
+    ///
+    operator cast_iterator< const Container, const T >() const;
 
     //--------------------------------------------------------------------------
     /// @brief      Equality operator.
@@ -273,6 +276,12 @@ cast_iterator< Container, T >::operator typename Container::const_iterator() con
     return (_container->cbegin() + _pos);
 }
 
+
+
+template < typename Container, typename T >
+cast_iterator< Container, T >::operator cast_iterator<const  Container, const T >() const {
+    return cast_iterator< const Container, const T >(_container, _pos);
+}
 
 
 //------------------------------------------------------------------------------

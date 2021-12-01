@@ -24,6 +24,22 @@ class Recorder : public std::basic_timed_executor {
     ///
     explicit Recorder(trigno::network::BasicDataClient* data_client, trigno::Sequence* out);
 
+    //--------------------------------------------------------------------------
+    /// @brief      Record data values for *sensors* synchronously for *time* ms.
+    ///
+    /// @param[in]  time     Duration to record.
+    /// @param[in]  sensors  Sensors to record. Defaults to full set.
+    ///
+    void run(Duration time, const sensor::List& sensors = sensor::all);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Record data values for *sensors* asynchronously for *time* ms.
+    ///
+    /// @param[in]  time     Duration to record.
+    /// @param[in]  sensors  Sensors to record. Defaults to full set.
+    ///
+    void launch(Duration time, const sensor::List& sensors = sensor::all);
+
  protected:
     //--------------------------------------------------------------------------
     /// @brief      Reads & exports a single *DataFrame* from the data client.

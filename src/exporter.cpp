@@ -6,66 +6,43 @@
 #include "basic_sequence_processor.hpp"  // trigno::tools::BasicSequenceProcessor
 #include "configuration.hpp"             // trigno::network::MultiSensorConfiguration
 #include "sequence.hpp"                  // trigno::Sequence::Range
+#include "io.hpp"
 #include "exporter.hpp"
 
 namespace trigno::tools {
 
-Exporter::Exporter(const std::string& file, Sequence* data) :
+Exporter::Exporter(const std::string& path, Sequence* data, char delimiter) :
     BasicSequenceProcessor(),
-    _file(_path, std::ofstream::out | std::ofstream::app),
-    _data(data) {
+    _path(_path),
+    _data(data),
+    _delimiter(delimiter) {
         /* ... */
 }
 
 
 
-Exporter::Exporter(const std::string& file, const sensor::List& sensors, Sequence* data) :
-    BasicSequenceProcessor(),
-    _file(file),
-    _data(data) {
-        /* ... */
-        // _file.open(_path, std::ofstream::out | std::ofstream::app);
+void Exporter::target(const std::string& path) noexcept {
+    _path = path;
 }
 
 
 
-Exporter::~Exporter() {
-    /* ... */
-    wait();
-    // forcefully close file
-    if (_file.is_open()) {
-        _file.close();
-    }
-}
-
-
-
-std::ofstream Exporter::file(const std::string& path, const sensor::List& sensors) {
-    std::ofstream file(path);
-    // _file.open(_path, std::ofstream::out | std::ofstream::app);
-    file.open(path, std::ofstream::out);  // no 'app' flag, file is cleared
-
-    // ...
-    throw std::not_implemented(__func__);
-    // ...
-    return file;
+void Exporter::source(Sequence* data) noexcept {
+    _data = data;
 }
 
 
 
 void Exporter::execute() {
-    _file.open(_path);
-    for (const auto& frame : _range) {
+    // export range to file, delegating to trigno::save implementaiton
+    trigno::save(_path, _range, false, _delimiter);
+    // remove/consume frames if valid sequence header
+    if (_data != nullptr) {
         // lock mutex to access shared resources
         std::unique_lock< std::mutex > lock(_mutex);
-        // write data frame to stream (trigno::Frame already provides << operator overload)
-        _file  << frame << std::endl;
-        // erase frame if valid source pointer
-        // if (_data != nullptr) {
-        //     _data.erase(_it);
-        // }
+        // call bulk erase() function
+        _data->erase(_range.begin(), _range.end());
     }
-    _file.close();
 }
 
 }  // namespace trigno::tools

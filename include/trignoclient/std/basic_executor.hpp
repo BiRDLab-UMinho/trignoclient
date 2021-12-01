@@ -84,7 +84,6 @@ class basic_executor {
     ///
     virtual void kill();
 
- protected:
     //--------------------------------------------------------------------------
     /// @brief      Check if execution condition is verified.
     ///
@@ -94,6 +93,7 @@ class basic_executor {
     ///
     virtual bool active() const;
 
+ protected:
     //--------------------------------------------------------------------------
     /// @brief      Un-looped function called before execute() loop.
     ///
@@ -192,6 +192,7 @@ inline void basic_executor::stop() {
 inline void basic_executor::kill() {
     /* ... */
     _kill = true;
+    wait();
 }
 
 
@@ -224,7 +225,7 @@ class basic_timed_executor : public basic_executor {
     ///
     /// @param[in]  duration  Duration to run operation for (in seconds).
     ///
-    void run(const chrono::milliseconds& time);
+    void run(const chrono::milliseconds& time = chrono::milliseconds::max());
 
     //--------------------------------------------------------------------------
     /// @brief      Launches a timed operation asynchronously (in the background), not blocking/waiting for its completion.
@@ -233,7 +234,7 @@ class basic_timed_executor : public basic_executor {
     ///
     /// @note       Operation keeps executing independent of main thread, even if it exits/finishes @ different times.
     ///
-    void launch(const chrono::milliseconds& time);
+    void launch(const chrono::milliseconds& time = chrono::milliseconds::max());
 
     //--------------------------------------------------------------------------
     /// @brief      Waits for execution to finish.

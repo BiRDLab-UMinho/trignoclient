@@ -508,7 +508,7 @@ MultiSensorConfiguration::MultiSensorConfiguration(Interface* network) :
     std::index< SensorConfiguration, std::string, true >(sensor::ID::MAX + 1, SensorConfiguration(sensor::ID::_1, network)) {
         // @note       sensor indexing begins at '1'
         for (size_t idx = sensor::ID::_1; idx <= sensor::ID::MAX; idx++) {
-            _data[idx].value()._id = static_cast< sensor::ID >(idx);
+            _data[idx].get()._id = static_cast< sensor::ID >(idx);
             key(idx) = "SENSOR #" + std::to_string(idx);
         }
 }

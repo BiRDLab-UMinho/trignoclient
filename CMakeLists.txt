@@ -24,13 +24,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 ## option (interactive) to enable/disable doc generation
-option(WITH_PLOTTING "Build plotting tools (requires additional dependencies)" ON)
-
-## option (interactive) to enable/disable doc generation
 option(BUILD_DOC     "Generate documentation (doxygen)" ON)
 
 ## option (interactive) to enable/disable doc generation
 option(WITH_EXAMPLES "Builds example code as executables" ON)
+
+## option (interactive) to enable/disable doc generation
+option(WITH_PLOTTING "Build plotting tools (requires additional dependencies)" ON)
+
 
 ## set default build type to Release
 ## only valid when null string (first call)
@@ -105,6 +106,7 @@ add_library(${PROJECT_NAME}
     src/sample.cpp
     src/frame.cpp
     src/sequence.cpp
+    src/io.cpp
 )
 # plotting headers & sources
 if (${WITH_PLOTTING})
@@ -162,7 +164,7 @@ if(${DOXYGEN_FOUND} AND BUILD_DOC)
         COMMENT "Generating API documentation with Doxygen"
         VERBATIM )
 elseif (NOT ${DOXYGEN_OUT})
-    message(STATUS "Doxygen need to be installed to generate the doxygen documentation")
+    message(STATUS "Doxygen needs to be installed to generate the doxygen documentation")
 endif()
 
 #############

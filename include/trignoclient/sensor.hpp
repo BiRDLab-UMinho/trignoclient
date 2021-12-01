@@ -44,7 +44,6 @@ enum ID {
 
 // class Sensor {
 //  public:
-    
 //     using List = std::vector< ID >;
 
 
@@ -74,7 +73,7 @@ enum ID {
 
 //     using Labels = std::vector< Label >;
 
-//     inline bool find(ID id, const sensor::List& sensors) {
+//     inline static bool find(ID id, const Sensor::List& sensors) {
 //         for (const auto& sensor : sensors) {
 //             if (sensor == id) {
 //                 return true;
@@ -83,11 +82,18 @@ enum ID {
 //         return false;
 //     }
 
+//     const ID id;
+
+//     std::string label;
+
 //  private:
 //     static List _all();
 
 //  public:
 //     static const List all = _all();
+
+//     explicit Sensor(ID id_, const std::string& label_ = "");
+
 // };
 
 

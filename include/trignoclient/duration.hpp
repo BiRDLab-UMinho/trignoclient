@@ -21,8 +21,7 @@ namespace trigno {
 /// 
 /// @note       Forces different types to
 ///
-// using duration = std::chrono::duration< float, std::ratio< 1 > >;
-using Duration = std::chrono::milliseconds;
+using Duration = std::chrono::milliseconds;  // std::chrono::duration< float, std::ratio< 1 > >;
 
 }  // namespace std
 

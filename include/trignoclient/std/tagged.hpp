@@ -135,25 +135,6 @@ class tagged {
     // template < typename iT >
     // tagged< T, Key >& operator=(iT&& other) { printf("tagged value move assignment!"); }
 
-
-    //--------------------------------------------------------------------------
-    /// @brief      Value accessor.
-    ///
-    /// @return     Reference to value member.
-    ///
-    /// @note       Acts as explicit conversion operator. Provided for convenience.
-    ///
-    reference value();
-
-    //--------------------------------------------------------------------------
-    /// @brief      Value accessor (const overload).
-    ///
-    /// @return     Const reference to value member.
-    ///
-    /// @note       Acts as explicit conversion operator. Provided for convenience.
-    ///
-    const_reference value() const;
-
     //--------------------------------------------------------------------------
     /// @brief      Function call operator.
     ///
@@ -161,7 +142,7 @@ class tagged {
     ///
     /// @note       Acts as explicit conversion operator. Provided for convenience.
     ///
-    reference operator()();
+    reference get();
 
     //--------------------------------------------------------------------------
     /// @brief      Function call operator (const overload).
@@ -170,7 +151,7 @@ class tagged {
     ///
     /// @note       Acts as explicit conversion operator. Provided for convenience.
     ///
-    const_reference operator()() const;
+    const_reference get() const;
 
     //--------------------------------------------------------------------------
     /// @brief      Function call operator.
@@ -260,28 +241,28 @@ tagged< T, Key >& tagged< T, Key >::operator=(const iT& other) {
 
 
 template < typename T, typename Key >
-typename tagged< T, Key >::reference tagged< T, Key >::value() {
+typename tagged< T, Key >::reference tagged< T, Key >::get() {
     return *_value;
 }
 
 
 
 template < typename T, typename Key >
-typename tagged< T, Key >::const_reference tagged< T, Key >::value() const {
+typename tagged< T, Key >::const_reference tagged< T, Key >::get() const {
     return *_value;
 }
 
 
 
 template < typename T, typename Key >
-typename tagged< T, Key >::reference tagged< T, Key >::operator()() {
+typename tagged< T, Key >::reference tagged< T, Key >::operator*() {
     return *_value;
 }
 
 
 
 template < typename T, typename Key >
-typename tagged< T, Key >::const_reference tagged< T, Key >::operator()() const {
+typename tagged< T, Key >::const_reference tagged< T, Key >::operator*() const {
     return *_value;
 }
 

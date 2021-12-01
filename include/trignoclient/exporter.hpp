@@ -19,33 +19,26 @@ namespace trigno::tools {
 class Exporter : public BasicSequenceProcessor {
  public:
     //--------------------------------------------------------------------------
-    /// @brief      Constructs a new instance, initializing a file stream from given *path*.
+    /// @brief      Constructs a new instance exporting to given *path*.
     ///
-    /// @param[in]  file  Local target file.
-    /// @param[in]  data  Input sequence, required to remove exported frames. Defaults to nullptr i.e. frames are only exported, but kept in memory.
-    ///
-    explicit Exporter(const std::string& path, Sequence* data = nullptr);
-
-    //--------------------------------------------------------------------------
-    /// @brief      Constructs a new instance, initializing a file @ given *path* with matching header from *sensors*.
-    ///
-    /// @param[in]  file     Local target file.
-    /// @param[in]  sensors  Sensors used to initialize file header
+    /// @param[in]  path     Path to local target file.
     /// @param[in]  data     Input sequence, required to remove exported frames. Defaults to nullptr i.e. frames are only exported, but kept in memory.
     ///
-    explicit Exporter(const std::string& path, const sensor::List& sensors, Sequence* data = nullptr);
+    explicit Exporter(const std::string& path = "", Sequence* data = nullptr, char delimiter = ',');
 
     //--------------------------------------------------------------------------
-    /// @brief      Destroys the object.    
+    /// @brief      Sets the export target file.
     ///
-    ~Exporter();
+    /// @param[in]  path     Path to local target file.
+    ///
+    void target(const std::string& path) noexcept;
 
     //--------------------------------------------------------------------------
-    /// @brief      Initializes a file from system configuration i.e. with headers matching sensor labels.
+    /// @brief      Sets the source sequence. Useful to disable frame removal @runtime.
     ///
-    /// @todo       Return type is redundant as std::ofstream has no copy constructor!
+    /// @param[in]  path     Source sequence. A null pointer disables frame removal.
     ///
-    static std::ofstream file(const std::string& path, const sensor::List& sensors);
+    void source(Sequence* data = nullptr) noexcept;
 
  protected:
     //--------------------------------------------------------------------------
@@ -54,24 +47,24 @@ class Exporter : public BasicSequenceProcessor {
     void execute() override;
 
     //--------------------------------------------------------------------------
-    /// @brief      Pointer to source sequence.
-    ///
-    Sequence* _data;
-
-    //--------------------------------------------------------------------------
-    /// @brief      Mutex to claim thread ownership during execution.
-    ///
-    std::mutex _mutex;
-
-    //--------------------------------------------------------------------------
     /// @brief      Target file path.
     ///
     std::string _path;
 
     //--------------------------------------------------------------------------
-    /// @brief      Output file stream.
+    /// @brief      Pointer to source sequence.
     ///
-    std::ofstream _file;
+    Sequence* _data;
+
+    //--------------------------------------------------------------------------
+    /// @brief      Pointer to source sequence.
+    ///
+    char _delimiter;
+
+    //--------------------------------------------------------------------------
+    /// @brief      Mutex to claim thread ownership during execution.
+    ///
+    std::mutex _mutex;
 };
 
 }  // namespace trigno::tools
