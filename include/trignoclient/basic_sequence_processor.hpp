@@ -64,7 +64,7 @@ class BasicSequenceProcessor : public std::basic_executor {
 
 
 
-BasicSequenceProcessor::BasicSequenceProcessor() :
+inline BasicSequenceProcessor::BasicSequenceProcessor() :
     std::basic_executor(),
     _range(nullptr) {
         /* ... */
@@ -72,7 +72,7 @@ BasicSequenceProcessor::BasicSequenceProcessor() :
 
 
 
-void BasicSequenceProcessor::run(Sequence::Range range, const sensor::List& sensors) {
+inline void BasicSequenceProcessor::run(Sequence::Range range, const sensor::List& sensors) {
     _range = range;
     _sensors = sensors;
     std::basic_executor::run();
@@ -87,7 +87,7 @@ void BasicSequenceProcessor::run(Sequence::Range range, const sensor::List& sens
 
 
 
-void BasicSequenceProcessor::launch(Sequence::Range range, const sensor::List& sensors) {
+inline void BasicSequenceProcessor::launch(Sequence::Range range, const sensor::List& sensors) {
     _range = range;
     _sensors = sensors;
     std::basic_executor::launch();
@@ -133,7 +133,7 @@ class BasicSequenceMetric : public BasicSequenceProcessor {
 
 
 template < typename T >
-BasicSequenceMetric< T >::BasicSequenceMetric() :
+inline BasicSequenceMetric< T >::BasicSequenceMetric() :
     BasicSequenceProcessor() {
         /* ... */
 }
@@ -141,7 +141,7 @@ BasicSequenceMetric< T >::BasicSequenceMetric() :
 
 
 template < typename T >
-const T& BasicSequenceMetric< T >::value() const noexcept {
+inline const T& BasicSequenceMetric< T >::value() const noexcept {
     return _value;
 }
 
