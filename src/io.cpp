@@ -289,7 +289,7 @@ void load(const std::string& path, T& data, bool initialize, size_t line, char d
 template void load< Sample >(const std::string&, Sample&, bool, size_t, char);
 template void load< Frame >(const std::string&, Frame&, bool, size_t, char);
 template void load< Frame::Stamped >(const std::string&, Frame::Stamped&, bool, size_t, char);
-template void load< Sequence::Range >(const std::string&, Sequence::Range&, bool, size_t, char);
+template void load< Sequence >(const std::string&, Sequence&, bool, size_t, char);
 
 }  // namespace trigno
 

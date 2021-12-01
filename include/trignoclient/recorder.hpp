@@ -54,6 +54,11 @@ class Recorder : public std::basic_timed_executor {
     trigno::network::BasicDataClient* _data_client;
 
     //--------------------------------------------------------------------------
+    /// @brief      Sensors to record.
+    ///
+    sensor::List _sensors;
+
+    //--------------------------------------------------------------------------
     /// @brief      Output sequence (where to copy read frames to).
     ///
     trigno::Sequence* _out;
