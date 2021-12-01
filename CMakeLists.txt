@@ -27,10 +27,15 @@ endif()
 option(BUILD_DOC     "Generate documentation (doxygen)" ON)
 
 ## option (interactive) to enable/disable doc generation
+option(BUILD_SHARED_LIBS "Wether generated libraries are shared (default) or static" ON)
+
+## option (interactive) to enable/disable doc generation
 option(WITH_EXAMPLES "Builds example code as executables" ON)
 
 ## option (interactive) to enable/disable doc generation
 option(WITH_PLOTTING "Build plotting tools (requires additional dependencies)" ON)
+
+
 
 
 ## set default build type to Release
@@ -108,17 +113,20 @@ add_library(${PROJECT_NAME}
     src/sequence.cpp
     src/io.cpp
 )
-# plotting headers & sources
+
+# plotting-specific headers & sources
 if (${WITH_PLOTTING})
     target_sources(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src/plotter.cpp)
     target_compile_definitions(${PROJECT_NAME} PUBLIC -DWITH_PLOTTING)
 endif()
-# link to external libraries
+
+# link to external libraries / dependencies
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
     pthread
 )
-# plotting library dependency
+
+# plotting-specific library dependency
 if (${WITH_PLOTTING})
     target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBRARIES}
