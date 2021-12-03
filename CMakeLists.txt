@@ -116,7 +116,9 @@ target_sources(${PROJECT_NAME} PRIVATE
     src/sample.cpp
     src/frame.cpp
     src/sequence.cpp
-    src/io.cpp)
+    src/io.cpp
+    src/test.cpp
+)
 
 # plotting-specific sources
 if (${WITH_PLOTTING})

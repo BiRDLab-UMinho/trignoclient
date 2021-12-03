@@ -17,7 +17,7 @@
 
 #include <thread>
 #include <utility>
-#include "std/details.hpp"               // std::can_apply
+#include "std/type_check.hpp"            // std::can_apply
 #include "duration.hpp"                  // trigno::Duration
 #include "sequence.hpp"                  // trigno::Sequence
 #include "basic_sequence_processor.hpp"  // trigno::tools::BasicSequenceProcessor, trigno::tools::BasicSequenceMetric<>
@@ -35,7 +35,7 @@ namespace trigno::tools {
 template < typename Processor >
 class Iterative : public BasicSequenceProcessor {
     //--------------------------------------------------------------------------
-    static_assert(std::is_base_of< Processor, BasicSequenceProcessor >(),
+    static_assert(std::is_base_of< BasicSequenceProcessor, Processor >(),
                   "[Processor] MUST BE DERIVED FROM [BasicSequenceProcessor].");
     // static_assert(std::returns_something< T >() && std::is_constructible< Out::value_type, std::out_type< T > >(),
     //               "[Out::value_type] MUST BE CONVERTIBLE FROM [T::Value].");
@@ -55,14 +55,14 @@ class Iterative : public BasicSequenceProcessor {
     //--------------------------------------------------------------------------
     /// @brief      Get idle duration.
     ///
-    /// @return     Const reference to member std::duration object.
+    /// @return     Const reference to member trigno::Duration object.
     ///
     const Duration& idle() const noexcept;
 
     //--------------------------------------------------------------------------
     /// @brief      Set idle duration.
     ///
-    /// @param[in]  idle_time  Time duration (as std::duration) to block execution @ end of input data.
+    /// @param[in]  idle_time  Time duration (as trigno::Duration) to block execution @ end of input data.
     ///
     void idle(const Duration& idle_time);
 
@@ -99,14 +99,14 @@ template < typename... Args, typename >
 Iterative< Processor >::Iterative(Args&&... args) :
     BasicSequenceProcessor(),
     _executor(std::forward<Args>(args)...),
-    _idle_time(std::duration(1.0)) /* 1s default idle duration */ {
+    _idle_time(Duration(1.0)) /* 1s default idle duration */ {
         /* ... */
 }
 
 
 
 template < typename Processor >
-const Duration& Iterative< Processor >::idle() {
+const Duration& Iterative< Processor >::idle() const noexcept {
     return _idle_time;
 }
 
@@ -120,7 +120,7 @@ void Iterative< Processor >::idle(const Duration& idle_time) {
 
 
 template < typename Processor >
-bool Iterative< Processor >::active() const final {
+bool Iterative< Processor >::active() const {
     if (_range == _range + 1) {
         std::this_thread::sleep_for(_idle_time);
         return (_range == _range + 1);
@@ -131,11 +131,13 @@ bool Iterative< Processor >::active() const final {
 
 
 template < typename Processor >
-void Iterative< Processor >::execute() final {
+void Iterative< Processor >::execute() {
     _executor.run(_range);
     _range++;
 }
 
+
+}  // namespace trigno::tools
 
 
 namespace std {
@@ -154,6 +156,8 @@ constexpr bool has_public_type() { return (has_value_type< T >()); }
 }  // namespace std
 
 
+namespace trigno::tools {
+
 //------------------------------------------------------------------------------
 /// @brief      Simple filter implementation that iteratively computes a sequence metric and builds an output sequence.
 ///
@@ -167,13 +171,13 @@ class Filter : public Iterative< Metric > {
     //--------------------------------------------------------------------------
     /// @brief      Static SFINAE implementation that checks if Metric has a public value type.
     ///
-    static_assert(std::has_public_value< Metric >(),
-                  "INVALID METRIC TYPE!")
+    static_assert(std::has_public_type< Metric >(),
+                  "INVALID METRIC TYPE!");
 
     //--------------------------------------------------------------------------
     /// @brief      Static SFINAE implementation that checks if Metric is derived from BasicSequenceMetric template.
     ///
-    static_assert(std::is_base_of< BasicSequenceMetric< Metric::Value >, Metric >(),
+    static_assert(std::is_base_of< BasicSequenceMetric< typename Metric::Value >, Metric >(),
                   "[T] MUST BE DERIVED FROM [BasicSequenceProcessor]!");
 
  public:
@@ -182,7 +186,7 @@ class Filter : public Iterative< Metric > {
     ///
     /// @note       If P::Value is trigno::Frame, Output is a trigno::Sequence (a.k.a. std::series< Frame, Frame::TimeStamp >).
     ///
-    using Output = std::series< Metric::Value, Frame::TimeStamp >;
+    using Output = std::series< typename Metric::Value, Frame::TimeStamp >;
 
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new instance.
@@ -230,14 +234,14 @@ Filter< Metric >::Filter(Args&&... args) :
 
 
 template < typename Metric >
-const Filter< Metric >::Output& Filter< Metric >::out() const noexcept {
+const typename Filter< Metric >::Output& Filter< Metric >::out() const noexcept {
     return _out;
 }
 
 
 
 template < typename Metric >
-void Filter< Metric >::execute() override {
+void Filter< Metric >::execute() {
     Iterative< Metric >::execute();
     // Output must be a STL or STL-like sequence container!
     _out.emplace_back(_out.out());

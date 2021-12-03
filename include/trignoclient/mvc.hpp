@@ -2,8 +2,9 @@
 #define TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_MVC_HPP_
 
 #include <initializer_list>
-#include "data_frame.hpp"      // trigno::DataFrame
-#include "basic_protocol.hpp"  // trigno::tools::BasicProtocol
+#include "sequence_metrics.hpp"  // trigno::tools::RMS, trigno::tools::Maximum
+#include "frame.hpp"             // trigno::Frame
+#include "basic_protocol.hpp"    // trigno::tools::BasicProtocol
 
 namespace trigno::tools {
 
@@ -36,12 +37,12 @@ class MVC : public BasicProtocol {
     //--------------------------------------------------------------------------
     /// @brief      RMS filter to extract signal envelope.
     ///
-    RMSFilter _envelope;
+    Filter< RMS > _envelope;
 
     //--------------------------------------------------------------------------
     /// @brief      RMS filter to extract signal envelope.
     ///
-    PeakDetector _peak_detector;
+    Maximum _peak_detector;
 };
 
 }  // namespace trigno::tools
