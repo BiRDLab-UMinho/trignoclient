@@ -11,10 +11,10 @@ namespace trigno::network {
 Client::Client() :
     system(&server),
     base(&server),
-    sensors(&server),
+    sensor(&server),
     connection(&server),
-    EMG(&sensors),
-    AUX(&sensors) {
+    EMG(&sensor),
+    AUX(&sensor) {
         /* ... */
 }
 
@@ -23,10 +23,10 @@ Client::Client() :
 Client::Client(const std::string& address, size_t command_port, size_t emg_data_port, size_t aux_data_port, const Duration& timeout) :
     system(&server),
     base(&server),
-    sensors(&server),
+    sensor(&server),
     connection(&server),
-    EMG(&sensors),
-    AUX(&sensors) {
+    EMG(&sensor),
+    AUX(&sensor) {
         /* ... */
         initialize(address, command_port, emg_data_port, aux_data_port, timeout);
 }
@@ -59,7 +59,7 @@ void Client::initialize(const std::string& address, size_t command_port, size_t 
     base.get();
 
     // update sensor configuration (...)
-    sensors.get();
+    sensor.get();
 
     // update network/connection parameters ...()
     connection.get();

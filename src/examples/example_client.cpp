@@ -35,14 +35,12 @@ int main(int argc, char const *argv[]) {
     client.initialize(server_address);
 
     // add local label to sensor #1 (idx -> 0)
-    client.sensors.label(sensor::ID::_1) = "TRAPEZIUS";
-
-    printf("DEBUG!!!!!!!!!!!\n");
+    client.sensor.label(sensor::ID::_1) = "TRAPEZIUS";
 
     // connected, get configuration
     try {
         // look for paired sensors!
-        if (!client.sensors.getActive().size()) {
+        if (!client.sensor.getActive().size()) {
             std::cout << "No paired/active sensors, aborting..." << std::endl;
             return 1;
         }
@@ -66,7 +64,7 @@ int main(int argc, char const *argv[]) {
                 // auto emg_data = client.EMG.read();
 
                 // print reading for the first channel of the labelled sensor
-                std::cout << "TRAPEZIUS -> " << emg_data["TRAPEZIUS"] << client.sensors["TRAPEZIUS"].units()[0] << "\n";
+                std::cout << "TRAPEZIUS -> " << emg_data["TRAPEZIUS"] << client.sensor["TRAPEZIUS"].units()[0] << "\n";
 
             } catch (std::exception& error) {
                 std::cout << "ERROR: " << error.what() << std::endl;

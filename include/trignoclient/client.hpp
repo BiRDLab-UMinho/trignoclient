@@ -118,7 +118,7 @@ class Client {
     /// @note       std::close_index<> is an STL-like container adapter that provides high-level labelling functionalities over a std::vector.
     ///             Allows a more intuitive interface when handle multiple labelled sensors.
     ///
-    MultiSensorConfiguration sensors;
+    MultiSensorConfiguration sensor;
 };
 
 }  // namespace trigno::network
