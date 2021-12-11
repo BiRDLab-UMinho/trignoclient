@@ -14,6 +14,7 @@
 #include <sstream>
 #include <vector>
 #include <limits>
+#include <iostream>
 #include "type_check.hpp"
 
 namespace std {
@@ -57,7 +58,33 @@ inline C tokenize(const string& data, char separator = ",", bool single_split = 
 /// @note       Wrapper function provided for convenience/verbosity/cleaner syntax.
 ///
 inline istream& ignore_until(istream& istream, char target) {
+    // if (istream.peek() != target) {
     istream.ignore(std::numeric_limits< std::streamsize >::max(), target);
+    // }
+    return istream;
+}
+
+
+
+//------------------------------------------------------------------------------
+/// @brief      Skips/consumes input stream until any of given 'delimiters' is found.
+///
+/// @param      istream  Input stream.
+/// @param[in]  targets  List of stop characters.
+///
+/// @return     Modified input stream.
+///
+inline istream& ignore_until(istream& istream, const std::initializer_list< char >& targets) {
+    char t = istream.peek();
+    while (istream.good()) {
+        for (auto target : targets) {
+            if (t == target) {
+                return istream;
+            }
+        }
+        istream >> t;
+    }
+    // istream.ignore(std::numeric_limits< std::streamsize >::max(), target);
     return istream;
 }
 
@@ -94,6 +121,8 @@ template < class T >
 using iterator_dereference = decltype(*(declval<T>().begin()));
 template < class T >
 using iterator_increment = decltype(++(declval<T>().begin()));
+template < class T >
+using input_stream_operator = decltype(++(declval<istream>() >> declval<T>()));
 ///
 template < class T >
 using has_begin = can_apply< range_begin, T >;
@@ -103,6 +132,8 @@ template < class T >
 using iterator_can_be_dereferenced = can_apply< iterator_dereference, T >;
 template < class T >
 using iterator_can_be_incremented = can_apply< iterator_increment, T >;
+template < class T >
+using can_be_loaded = can_apply< input_stream_operator, T >;
 ///
 template < typename T >
 constexpr bool is_iteratable() { return (has_begin< T >() &&
@@ -110,6 +141,8 @@ constexpr bool is_iteratable() { return (has_begin< T >() &&
                                          iterator_can_be_dereferenced< T >() &&
                                          iterator_can_be_incremented< T >()); }
 
+template < typename T >
+constexpr bool is_loadable() { return can_be_loaded< T >(); }
 
 
 //------------------------------------------------------------------------------
@@ -152,39 +185,40 @@ inline ostream& print_into(ostream& ostream, const T& input, char delimiter = ',
 //------------------------------------------------------------------------------
 /// @brief      Loads values from an input stream into a range/container.
 ///
-/// @param[out] istream    The stream to read data from.
-/// @param[in]  range      Output range. Right shift (>>) stream operator is called for each element.
-/// @param[in]  delimiter  Delimiter text/character. Defaults to ','.
+/// @param[out] istream       The stream to read data from.
+/// @param[in]  range         Output range. Right shift (>>) stream operator is called for each element.
+/// @param[in]  delimiter     Delimiter text/character. Defaults to ','.
+/// @param[in]  ignore_break  Ignore break flag. If true (default), assumes new line character as a delimiter and will load continuously.
+///                           Otherwise will stop @ end of line.
 ///
 /// @tparam     Range      Range/container type. Must be iteratable (provide begin & end dereferenceable iterators)
 ///
 /// @return     Modified (consumed) output stream.
 ///
 template < typename T >
-inline istream& load_from(istream& istream, T& input, char delimiter = ',') {
+inline istream& load_from(istream& istream, T& input, char delimiter = ',', bool ignore_break = true) {
     if constexpr(!is_iteratable< T >()) {
-        // for non-iteratable types
+        // if *ignore_new_line* is true, return @ '\n' character
+        // in top-most iteratable types, will only use a single line to load data
+        if (istream.peek() == '\n' && ignore_break) return istream;  // skipline(istream);
+        // in case first value is a delimiter char (bad data -> should account for that case here?)
+        if (istream.peek() == delimiter) ignore_until(istream, delimiter);
+        // for non-iteratable types, use shift operator (must be defined!)
+        // if constexpr (is_loadable< T >()) istream >> input;
         istream >> input;
+        // ignore streeam until next delimiter *unless* at end of line
+        if (istream.peek() != '\n') ignore_until(istream, delimiter);
     } else {
+        // iterate through source, call load_from() recursively
         auto begin = input.begin();
         auto end = input.end();
 
         size_t valid_pos = 0;
-        while (begin != end) {
-            // istream >> *begin;
+        while (begin != end && istream.good()) {
+            // recursive call
             load_from(istream, *begin, delimiter);
-            if (!istream.good()) {
-                istream.seekg(valid_pos, std::ios::beg); // reset position to last valid pos
-                istream.clear();
-            } else {
-                begin++;
-                valid_pos = istream.tellg();
-            }
-            // istream.ignore(std::numeric_limits< std::streamsize >::max(), delimiter);
-            ignore_until(istream, delimiter);
-            if (istream.eof()) {
-                break;
-            }
+            // increment iterator
+            begin++;
         }
     }
     return istream;

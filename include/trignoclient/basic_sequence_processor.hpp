@@ -25,8 +25,9 @@ class BasicSequenceProcessor : public std::basic_executor {
     ///
     /// @param      range  Input range
     ///
-    /// @note       Range passed by value in order to allow both lvalue and rvalue arguments without an additional overload.
-    ///             Range (a.k.a.) represents a light iteraror type, copies are cheap.
+    /// @note       Range passed by value by iterator convention (cheap to copy).
+    ///             Sensor list also passed by value in order to avoid having to declare execute() overload
+    ///             and reimplement execution loop in run();
     ///
     void run(Sequence::Range range, const sensor::List& sensors = sensor::all);
 
@@ -35,8 +36,9 @@ class BasicSequenceProcessor : public std::basic_executor {
     ///
     /// @param      range  Input range
     ///
-    /// @note       Range passed by value in order to allow both lvalue and rvalue arguments without an additional overload.
-    ///             Range (a.k.a.) represents a light iteraror type, copies are cheap.
+    /// @note       Range passed by value by iterator convention (cheap to copy).
+    ///             Sensor list also passed by value in order to avoid having to declare execute() overload
+    ///             and reimplement execution loop in run();
     ///
     void launch(Sequence::Range range, const sensor::List& sensors = sensor::all);
 
@@ -76,13 +78,6 @@ inline void BasicSequenceProcessor::run(Sequence::Range range, const sensor::Lis
     _range = range;
     _sensors = sensors;
     std::basic_executor::run();
-
-    // std::basic_executor::start();
-    // while (std::basic_executor::active()) {
-    //     execute(range, sensors);
-    //     if (_kill) return;
-    // }
-    // std::basic_executor::stop();
 }
 
 

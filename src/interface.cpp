@@ -36,18 +36,8 @@ const std::string& Interface::version() const {
 
 
 void Interface::connect(const std::string& address, size_t port, const Duration& timeout) {
-    try {
-        _network.connect(address, port, timeout);
-    } catch (boost::system::system_error& error) {  // or boost::system::system_error -> typedef this!
-        std::cout << "Unable to connect to server:\n" << error.what() << std::endl;
-        // throw std::runtime_error("Failed connect!");
-    }
-    try {
-        _protocol_version = std::string(_network.read_until('\n').data());
-        // std::cout << _protocol_version << std::endl;
-    } catch (boost::system::system_error&) {  // or boost::system::system_error -> typedef this!
-        std::cout << "Unable to parse Network Protocol Version" << std::endl;
-    }
+    _network.connect(address, port, timeout);
+    _protocol_version = std::string(_network.read_until('\n').data());
 }
 
 
@@ -125,5 +115,16 @@ bool Interface::waitFor(const std::string& target, const Duration& timeout, size
 
     return false;
 }
+
+
+
+std::future< std::string > Interface::schedule(const Duration& delay, const std::string& query, const Duration& timeout) {
+    std::future< std::string > response =  std::async(std::launch::async, [this, delay, query, timeout ] {
+        std::this_thread::sleep_for(delay);
+        return this->query(query, timeout);
+    });
+    return response;
+}
+
 
 }  // namespace trigno::network

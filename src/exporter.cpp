@@ -2,18 +2,18 @@
 #include <fstream>
 #include <mutex>
 #include <thread>
-#include "std/not_implemented.hpp"       // std:not_implemented
+#include "std/exception.hpp"             // std::not_implemented
 #include "basic_sequence_processor.hpp"  // trigno::tools::BasicSequenceProcessor
 #include "configuration.hpp"             // trigno::network::MultiSensorConfiguration
 #include "sequence.hpp"                  // trigno::Sequence::Range
-#include "io.hpp"
+#include "io.hpp"                        // trigno::save()
 #include "exporter.hpp"
 
 namespace trigno::tools {
 
 Exporter::Exporter(const std::string& path, Sequence* data, char delimiter) :
     BasicSequenceProcessor(),
-    _path(_path),
+    _path(path),
     _data(data),
     _delimiter(delimiter) {
         /* ... */
@@ -43,6 +43,14 @@ void Exporter::execute() {
         // call bulk erase() function
         _data->erase(_range.begin(), _range.end());
     }
+}
+
+
+
+template < >
+void Iterative< Exporter >::execute() {
+    // run executor operation
+    _executor.run(_range);
 }
 
 }  // namespace trigno::tools

@@ -51,7 +51,10 @@ class basic_executor {
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new instance.
     ///
-    basic_executor();
+    /// @param[in]  continuous  Boolean flag for continuous operations.
+    ///                         Defaults to false, wherein operation is killed after first run.
+    ///
+    explicit basic_executor(bool continuous = false);
 
     //--------------------------------------------------------------------------
     /// @brief      Destroys the object.
@@ -132,7 +135,7 @@ class basic_executor {
 
 
 
-inline basic_executor::basic_executor() : _kill(false) {
+inline basic_executor::basic_executor(bool loop) : _kill(!loop) /* single loop unless derived types override active() */ {
     /* ... */
 }
 
@@ -173,7 +176,7 @@ inline void basic_executor::wait() const {
 inline bool basic_executor::active() const {
     /* ... */
     // base implementation disables loop i.e. execute() is run only once
-    return false;
+    return true;
 }
 
 
@@ -192,7 +195,7 @@ inline void basic_executor::stop() {
 inline void basic_executor::kill() {
     /* ... */
     _kill = true;
-    wait();
+    // wait();  // dangerous to wait for loop to exit. if e.g. kill() is called within execute(), it gets stuck in a loop!
 }
 
 
@@ -293,6 +296,7 @@ class basic_timed_executor : public basic_executor {
 
 
 inline basic_timed_executor::basic_timed_executor() :
+    basic_executor(true),
     _timer(_io) {
         /* ... */
 }
@@ -302,7 +306,7 @@ inline basic_timed_executor::basic_timed_executor() :
 inline void basic_timed_executor::run(const chrono::milliseconds& time) {
     // wait(); // wait for previous execution if active!
     reset(time);
-    run();
+    basic_executor::run();
 }
 
 
@@ -310,7 +314,7 @@ inline void basic_timed_executor::run(const chrono::milliseconds& time) {
 inline void basic_timed_executor::launch(const chrono::milliseconds& time) {
     // wait(); // wait for previous execution if active!
     reset(time);
-    launch();
+    basic_executor::launch();
 }
 
 

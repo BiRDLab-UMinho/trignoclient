@@ -17,51 +17,83 @@ void Sequence::discard(size_t n_samples) {
 
 
 
-void Sequence::add(const Frame::Stamped& frame) {
-    // if (size() > 0) {
-    //     if (back().sensors() != frame.sensors()) {
-    //         throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (mismatched sensors)!");
-    //     }
-    // }
-    if (frame.key <= _data.back().key) {
+void Sequence::add(const Frame::Stamped& frame, bool sequential, bool match_sensors) {
+    // compare input key (time stamp) w/ back of sequence
+    if (sequential && size() && frame.key <= _data.back().key) {
         throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (< time stamp)!");
     }
+    // compare input sensors w/ back of sequence (if not empty)
+    if (match_sensors && size() && back().sensors() != frame.get().sensors()) {
+        throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (mismatched sensors)!");
+    }
+    // create copy in place
     _data.emplace_back(frame);
 }
 
 
 
-void Sequence::add(const Frame::TimeStamp& time, const Frame& frame) {
-    // if (size() > 0) {
-    //     if (back().sensors() != frame.sensors()) {
-    //         throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (mismatched sensors)!");
-    //     }
-    // }
-    if (time <= _data.back().key) {
+void Sequence::add(Frame::Stamped&& frame, bool sequential, bool match_sensors) {
+    // compare input key (time stamp) w/ back of sequence
+    if (sequential && size() && frame.key <= _data.back().key) {
         throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (< time stamp)!");
     }
+    // compare input sensors w/ back of sequence (if not empty)
+    if (match_sensors && size() && back().sensors() != frame.get().sensors()) {
+        throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (mismatched sensors)!");
+    }
+    // create copy in place - move constructor will be called in place by std::tagged<>
+    _data.emplace_back(frame);
+}
+
+
+
+void Sequence::add(const Frame::TimeStamp& time, const Frame& frame, bool sequential, bool match_sensors) {
+    // compare input key (time stamp) w/ back of sequence
+    if (sequential && size() && time <= _data.back().key) {
+        throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (< time stamp)!");
+    }
+    // compare input sensors w/ back of sequence (if not empty)
+    if (match_sensors && size() && back().sensors() != frame.sensors()) {
+        throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (mismatched sensors)!");
+    }
+    // create copy in place
     _data.emplace_back(time, frame);
 }
 
 
 
-Sequence& Sequence::operator<<(Frame::Stamped& frame) {
-    emplace_back(std::move(frame));
+void Sequence::add(const Frame::TimeStamp& time, Frame&& frame, bool sequential, bool match_sensors) {
+    // compare input key (time stamp) w/ back of sequence
+    if (sequential && size() && time <= _data.back().key) {
+        throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (< time stamp)!");
+    }
+    // compare input sensors w/ back of sequence (if not empty)
+    if (match_sensors && size() && back().sensors() != frame.sensors()) {
+        throw std::invalid_argument("[" + std::string(__func__) + "] Invalid frame (mismatched sensors)!");
+    }
+    // create copy in place - move constructor will be called in place by std::tagged<>
+    _data.emplace_back(time, frame);
+}
+
+
+
+Sequence& Sequence::operator<<(const Frame::Stamped& frame) {
+    _data.emplace_back(frame);
     return (*this);
 }
 
 
 
 Sequence& Sequence::operator<<(Frame::Stamped&& frame) {
-    emplace_back(frame);
+    _data.emplace_back(frame);
     return (*this);
 }
 
 
 
-Sequence& Sequence::operator<<(Sequence& sequence) {
-    // @note it may be better to use insert(_data.end(), sequence.begin(), sequence.end())
-    for (auto& frame : sequence) {
+Sequence& Sequence::operator<<(Sequence::ConstRange range) {
+    // @note consider use insert(_data.end(), sequence.begin(), sequence.end())
+    for (const Frame::Stamped& frame : range) {
         (*this) << frame;
     }
     return (*this);
@@ -70,7 +102,7 @@ Sequence& Sequence::operator<<(Sequence& sequence) {
 
 
 Sequence& Sequence::operator<<(Sequence&& sequence) {
-    for (auto& frame : sequence) {
+    for (Frame::Stamped&& frame : sequence) {
         (*this) << frame;
     }
     return (*this);
@@ -83,7 +115,7 @@ Sequence::Range Sequence::range(float time, float window, float sample_rate, flo
     unsigned int window_size  = sqrt(pow(window * sample_rate, 2));
     unsigned int overlap_size = sqrt(pow(overlap * sample_rate, 2));
     // construct range iterator on return!
-    return Sequence::Range(this, find(time), window_size, overlap_size);
+    return Sequence::Range(&_data, find(time), window_size, overlap_size);
 }
 
 
@@ -92,7 +124,7 @@ Sequence::ConstRange Sequence::range(float time, float window, float sample_rate
     unsigned int window_size  = sqrt(pow(window * sample_rate, 2));
     unsigned int overlap_size = sqrt(pow(overlap * sample_rate, 2));
     // construct range iterator on return!
-    return Sequence::ConstRange(this, find(time), window_size, overlap_size);
+    return Sequence::ConstRange(&_data, find(time), window_size, overlap_size);
 }
 
 
@@ -109,7 +141,7 @@ Sequence::operator ConstRange() const {
 
 
 
-Sequence::Signal Sequence::extract(const Sequence::Range& range, sensor::ID id, size_t channel) {
+Sequence::Signal Sequence::extract(Sequence::ConstRange range, sensor::ID id, size_t channel) {
     Signal out;
     // out.reserve(range.size());  // std::series wraps around std::deque, no reserve()
 
@@ -127,7 +159,7 @@ Sequence::Signal Sequence::extract(const Sequence::Range& range, sensor::ID id, 
 }
 
 
-Sequence::Signal Sequence::extract(const Sequence::Range& range, const sensor::Label& label, size_t channel) {
+Sequence::Signal Sequence::extract(Sequence::ConstRange range, const sensor::Label& label, size_t channel) {
     Signal out;
     // out.reserve(range.size());  // std::series wraps around std::deque, no reserve()
 

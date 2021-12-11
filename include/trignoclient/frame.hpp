@@ -21,7 +21,6 @@
 #include <memory>
 #include <utility>
 #include "std/indexer.hpp"    // std::index
-#include "std/not_implemented.hpp" // std::not_implemented
 #include "sensor.hpp"         // trigno::sensor::ID
 #include "sample.hpp"         // trigno::Sample, trigno::Sample::Ptr
 #include "configuration.hpp"  // trigno::network::MultiSensorConfiguration

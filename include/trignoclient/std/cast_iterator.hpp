@@ -120,12 +120,23 @@ class cast_iterator : std::iterator< std::random_access_iterator_tag, T > {
     //--------------------------------------------------------------------------
     /// @brief      Conversion operator to *const* iterator of the underlying container type.
     ///
-    operator typename Container::const_iterator() const;
+    operator typename Container::const_iterator();
 
     //--------------------------------------------------------------------------
-    /// @brief      Conversion operator to analogous *const* iterator.
+    /// @brief      Conversion operator to different container/value type.
     ///
-    operator cast_iterator< const Container, const T >() const;
+    /// @note       Also captures conversions to *const* cast iterators i.e. cast_iterator< const Container, const T >
+    ///
+    template < typename oContainer, typename oT, typename = typename enable_if< is_convertible< T, oT >::value >::type >
+    operator cast_iterator< oContainer, oT >();
+
+    //--------------------------------------------------------------------------
+    /// @brief      Conversion operator to different container/value type (*const* overload).
+    ///
+    /// @note       Also captures conversions to *const* cast iterators i.e. cast_iterator< const Container, const T >
+    ///
+    template < typename oContainer, typename oT, typename = typename enable_if< is_convertible< T, oT >::value >::type >
+    operator cast_iterator< oContainer, oT >() const;
 
     //--------------------------------------------------------------------------
     /// @brief      Equality operator.
@@ -195,7 +206,6 @@ cast_iterator< Container, T >& cast_iterator< Container, T >::operator++() {
 
 template < typename Container, typename T >
 cast_iterator< Container, T > cast_iterator< Container, T >::operator++(int) {
-    printf("postfix increment!\n");
     cast_iterator< Container, T > retval = *this;
     ++(*this);
     return retval;
@@ -248,11 +258,15 @@ cast_iterator< Container, T >& cast_iterator< Container, T >::operator-=(const t
     return *this;
 }
 
+template < typename T >
+T& func(T& arg) { return arg; }
 
 
 template < typename Container, typename T >
 T& cast_iterator< Container, T >::operator*() {
-    return (*_container)[_pos];
+    // std::string l = _container->at(_pos);
+    // std::string v = (*_container)[_pos];
+    return _container->at(_pos);
 }
 
 
@@ -272,16 +286,28 @@ cast_iterator< Container, T >::operator typename Container::iterator() {
 
 
 template < typename Container, typename T >
-cast_iterator< Container, T >::operator typename Container::const_iterator() const {
+cast_iterator< Container, T >::operator typename Container::const_iterator() {
     return (_container->cbegin() + _pos);
 }
 
 
 
 template < typename Container, typename T >
-cast_iterator< Container, T >::operator cast_iterator<const  Container, const T >() const {
-    return cast_iterator< const Container, const T >(_container, _pos);
+template < typename oContainer, typename oT, typename >
+cast_iterator< Container, T >::operator cast_iterator< oContainer, oT >() {
+    return cast_iterator< oContainer, oT >(_container, _pos);
 }
+
+
+
+template < typename Container, typename T >
+template < typename oContainer, typename oT, typename >
+cast_iterator< Container, T >::operator cast_iterator< oContainer, oT >() const {
+    static_assert(is_const< oContainer >(), "CONVERSION FROM CV-QUALIFIED OBJECTS TO NON-CONST TYPES NOT ALLOWED!");
+    static_assert(is_const< oT >(), "CONVERSION FROM CV-QUALIFIED OBJECTS TO NON-CONST TYPES NOT ALLOWED!");
+    return cast_iterator< oContainer, oT >(_container, _pos);
+}
+
 
 
 //------------------------------------------------------------------------------

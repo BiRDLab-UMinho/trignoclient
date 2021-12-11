@@ -9,6 +9,7 @@
 #include "std/basic_executor.hpp"        // std::basic_executor
 #include "configuration.hpp"             // trigno::network::MultiSensorConfiguration
 #include "basic_sequence_processor.hpp"  // trigno::tools::BasicSequenceProcessor
+#include "iterative.hpp"                 // trigno::tools::Iterative
 #include "sequence.hpp"                  // trigno::Sequence
 
 namespace trigno::tools {
@@ -66,6 +67,17 @@ class Exporter : public BasicSequenceProcessor {
     ///
     std::mutex _mutex;
 };
+
+
+
+//------------------------------------------------------------------------------
+/// @brief      Executes operation, i.e. calls run() on member executor instance.
+///
+/// @note       In order to use Iterator class w/ Exporter processor, execute() needs to be modified.
+///             Range iterator is not incremented as elements are being removed from sequence.
+///
+template < /* specialization for iterative (continuous) exporter */ >
+void Iterative< Exporter >::execute();
 
 }  // namespace trigno::tools
 

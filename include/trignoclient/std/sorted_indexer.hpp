@@ -101,13 +101,13 @@ class sorted_indexer : public indexer< Container, T, Locked > {
     /// @brief      Range iterator type. Allows access to an iteratable subset of underlying container.
     ///
     template < typename oT = value_type >
-    using element_range = range_iterator< sorted_indexer< Container, T, Locked >, oT >;
+    using element_range = range_iterator< Container, oT >;
 
     //--------------------------------------------------------------------------
     /// @brief      Const range iterator type. Allows access to an iteratable subset of underlying container.
     ///
     template < typename oT = value_type >
-    using const_element_range = range_iterator< const sorted_indexer< Container, T, Locked >, const oT >;
+    using const_element_range = range_iterator< const Container, const oT >;
 
     //--------------------------------------------------------------------------
     /// @brief      Explicit declaration of base type methods required in sorted_indexer<> definition.
@@ -372,7 +372,7 @@ sorted_indexer< Container, T, Locked >::element_range< oT > sorted_indexer< Cont
                   "[value_type] MUST BE CONVERTIBLE TO OUTPUT TYPE [oT]");
     //
     auto n = width > this->size() ? this->size() : width;
-    return element_range< oT >(this, 0, n, overlap);
+    return element_range< oT >(&_data, 0, n, overlap);
 }
 
 
@@ -385,7 +385,7 @@ sorted_indexer< Container, T, Locked >::const_element_range< oT > sorted_indexer
                   "[value_type] MUST BE CONVERTIBLE TO OUTPUT TYPE [oT]");
     //
     auto n = width > this->size() ? this->size() : width;
-    return const_element_range< oT >(this, 0, n, overlap);
+    return const_element_range< oT >(&_data, 0, n, overlap);
 }
 
 
@@ -398,7 +398,7 @@ sorted_indexer< Container, T, Locked >::element_range< oT > sorted_indexer< Cont
                   "[value_type] MUST BE CONVERTIBLE TO OUTPUT TYPE [oT]");
     //
     auto n = width > this->size() ? 0 : (this->size() - width);
-    return element_range< oT >(this, this->size() - n, n, overlap);
+    return element_range< oT >(&_data, this->size() - n, n, overlap);
 }
 
 
@@ -411,7 +411,7 @@ sorted_indexer< Container, T, Locked >::const_element_range< oT > sorted_indexer
                   "[value_type] MUST BE CONVERTIBLE TO OUTPUT TYPE [oT]");
     //
     auto n = width > this->size() ? 0 : (this->size() - width);
-    return const_element_range< oT >(this, this->size() - n, n, overlap);
+    return const_element_range< oT >(&_data, this->size() - n, n, overlap);
 }
 
 
@@ -426,7 +426,7 @@ sorted_indexer< Container, T, Locked >::element_range< oT > sorted_indexer< Cont
     //
     // construct range iterator on return
     // value casting is performed implictly by range_iterator conversion operators (cf. range_iterator)
-    return element_range< oT >(this, pos, width, overlap);
+    return element_range< oT >(&_data, pos, width, overlap);
 }
 
 
@@ -441,7 +441,7 @@ sorted_indexer< Container, T, Locked >::const_element_range< oT > sorted_indexer
     //
     // construct range iterator on return
     // value casting is performed implictly by range_iterator conversion operators (cf. range_iterator)
-    return const_element_range< oT >(this, pos, width, overlap);
+    return const_element_range< oT >(&_data, pos, width, overlap);
 }
 
 
@@ -456,7 +456,7 @@ sorted_indexer< Container, T, Locked >::element_range< oT > sorted_indexer< Cont
     //
     // construct range iterator on return
     // value casting is performed implictly by range_iterator conversion operators (cf. range_iterator)
-    return element_range< oT >(this, find(key), width, overlap);
+    return element_range< oT >(&_data, find(key), width, overlap);
 }
 
 
@@ -471,7 +471,7 @@ sorted_indexer< Container, T, Locked >::const_element_range< oT > sorted_indexer
     //
     // construct range iterator on return
     // value casting is performed implictly by range_iterator conversion operators (cf. range_iterator)
-    return const_element_range< oT >(this, find(key), width, overlap);
+    return const_element_range< oT >(&_data, find(key), width, overlap);
 }
 
 
@@ -483,7 +483,7 @@ sorted_indexer< Container, T, Locked >::element_range< typename sorted_indexer< 
     auto pos_begin = find(from);
     auto pos_end = find(to);
     assert(pos_end > pos_begin && ("INVALID ELEMENT KEYS"));
-    return element_range< value_type>(this, pos_begin, pos_end - pos_begin, overlap);
+    return element_range< value_type>(&_data, pos_begin, pos_end - pos_begin, overlap);
 }
 
 
@@ -495,7 +495,7 @@ sorted_indexer< Container, T, Locked >::const_element_range< typename sorted_ind
     auto pos_begin = find(from);
     auto pos_end = find(to);
     assert(pos_end > pos_begin && ("INVALID ELEMENT KEYS"));
-    return const_element_range< value_type>(this, pos_begin, pos_end - pos_begin, overlap);
+    return const_element_range< value_type>(&_data, pos_begin, pos_end - pos_begin, overlap);
 }
 
 

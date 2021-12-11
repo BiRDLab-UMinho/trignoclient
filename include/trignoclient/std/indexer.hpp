@@ -18,15 +18,11 @@
 #define TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_STD_INDEXER_HPP_
 
 #include <vector>
-// #include <deque>
-// #include <list>
-// #include <string>
 #include <type_traits>
 #include <cassert>
 #include <utility>
-// #include <iostream>
 #include <exception>
-// #include <initializer_list>
+#include <initializer_list>
 #include <algorithm>
 #include "type_check.hpp"      // std::can_apply<>
 #include "tagged.hpp"          // std::tagged<>
@@ -49,17 +45,70 @@ template < class T >
 using id_member = decltype(declval<T>().key);
 template < class T >
 using id_function = decltype(declval<T>().key());
+template < class T >
+using position_accessor = decltype(declval<T>().operator[](0));
+template < class T >
+using front_accessor = decltype(declval<T>().front());
+template < class T >
+using back_accessor = decltype(declval<T>().back());
+template < class T >
+using front_pusher = decltype(declval<T>().push_front());
+template < class T >
+using back_pusher = decltype(declval<T>().push_back());
+template < class T >
+using front_emplacer = decltype(declval<T>().emplace_front());
+template < class T >
+using back_emplacer = decltype(declval<T>().emplace_back());
+template < class T >
+using front_popper = decltype(declval<T>().pop_front());
+template < class T >
+using back_popper = decltype(declval<T>().pop_back());
 ///
 template < class T >
 using has_id = can_apply< id_member, T >;
 template < class T >
 using has_id_function = can_apply< id_function, T >;
+template < class T >
+using has_position_accessor = can_apply< position_accessor, T >;
+template < class T >
+using has_front_accessor = can_apply< front_accessor, T >;
+template < class T >
+using has_back_accessor = can_apply< back_accessor, T >;
+template < class T >
+using has_front_pusher = can_apply< front_pusher, T >;
+template < class T >
+using has_back_pusher = can_apply< back_pusher, T >;
+template < class T >
+using has_front_emplacer = can_apply< front_emplacer, T >;
+template < class T >
+using has_back_emplacer = can_apply< back_emplacer, T >;
+template < class T >
+using has_front_popper = can_apply< front_popper, T >;
+template < class T >
+using has_back_popper = can_apply< back_popper, T >;
 ///
 template < typename T >
 constexpr bool can_be_indexed() { return (has_id< T >() && !has_id_function< T >()); }
 template < typename T, typename U >
 constexpr bool can_be_replaced_by() { return (is_convertible< U, T >() && is_convertible< T, U >() /* whether T=U and U=T are valid */); }
-
+template < typename T >
+constexpr bool is_position_accessible() { return (has_position_accessor< T >()); }
+template < typename T >
+constexpr bool has_front() { return (has_front_accessor< T >()); }
+template < typename T >
+constexpr bool has_back() { return (has_back_accessor< T >()); }
+template < typename T >
+constexpr bool is_front_pushable() { return (has_front_pusher< T >()); }
+template < typename T >
+constexpr bool is_back_pushable() { return (has_back_pusher< T >()); }
+template < typename T >
+constexpr bool is_front_emplaceable() { return (has_front_emplacer< T >()); }
+template < typename T >
+constexpr bool is_back_emplaceable() { return (has_back_emplacer< T >()); }
+template < typename T >
+constexpr bool is_front_poppable() { return (has_front_popper< T >()); }
+template < typename T >
+constexpr bool is_back_poppable() { return (has_back_popper< T >()); }
 
 
 //------------------------------------------------------------------------------
@@ -92,6 +141,9 @@ class indexer {
     ///
     static_assert(std::is_class< Container >(),
                   "CONTAINER TYPE MUST BE A CLASS (NON-UNION)!");
+
+    static_assert(std::is_position_accessible< Container >(),
+                  "CONTAINER TYPE MUST BE RANDOM POSITION ACCESSIBLE ([])!");
 
     static_assert(std::can_be_indexed< typename Container::value_type >(),
                   "UNDERLYING CONTAINER ELEMENT TYPE [Container::value_type] MUST BE INDEXABLE!");
@@ -195,6 +247,17 @@ class indexer {
     ///
     template < bool oLocked >
     indexer(indexer< Container, T, oLocked >&& other);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Constructs a new instance, from a braced initializer list of *T* elements.
+    ///
+    /// @param[in]  data   List of elements to assign to underlying container.
+    ///
+    /// @note       Useful when *T* != *Container::value_type* (public interface different from underltying element type).
+    ///             Generic variadic parameter pack constructor indexer(Args&&...) captures underlaying Container initializer list constructor,
+    ///             but it will notfit if a list of elements of type *T* is passed.
+    ///
+    indexer(std::initializer_list< T > data);
 
     //--------------------------------------------------------------------------
     /// @brief      Destroys the object.
@@ -355,7 +418,7 @@ class indexer {
     ///
     /// @note       Templated return type allows explictly requesting either value_type or element_type references @ *pos*.
     ///
-    template < typename oT = reference >
+    template < typename oT = value_type >
     oT& at(size_type pos);
 
     //--------------------------------------------------------------------------
@@ -371,7 +434,7 @@ class indexer {
     ///
     /// @note       Templated return type allows explictly requesting either value_type or element_type references @ *pos*.
     ///
-    template < typename oT = const_reference >
+    template < typename oT = value_type >
     const oT& at(size_type pos) const;
 
     //--------------------------------------------------------------------------
@@ -392,7 +455,7 @@ class indexer {
     ///
     /// @note       Templated return type allows explictly requesting either value_type or element_type references @ *pos*.
     ///
-    template < typename oT = reference, typename Arg = key_type, typename = typename enable_if< !is_convertible< Arg, size_type >::value >::type >
+    template < typename oT = value_type, typename Arg = key_type, typename = typename enable_if< !is_convertible< Arg, size_type >::value >::type >
     oT& at(const key_type& key);
 
     //--------------------------------------------------------------------------
@@ -413,7 +476,7 @@ class indexer {
     ///
     /// @note       Templated return type allows explictly requesting either value_type or element_type references @ *pos*.
     ///
-    template < typename oT = const_reference, typename Arg = key_type, typename = typename enable_if< !is_convertible< Arg, size_type >::value >::type >
+    template < typename oT = value_type, typename Arg = key_type, typename = typename enable_if< !is_convertible< Arg, size_type >::value >::type >
     const oT& at(const key_type& key) const;
 
     //--------------------------------------------------------------------------
@@ -585,31 +648,38 @@ class indexer {
     void swap(const indexer< Container, T, oLocked >& other) noexcept;
 
     void assign(size_type count, const T& value);
+
     template< class InputIt >
     void assign(InputIt first, InputIt last);
+
     void assign(std::initializer_list<T> ilist);
 
-    template < typename... Args >
-    typename container_type::iterator emplace(const_iterator pos, Args... args);
+    template< typename InputIt, typename = typename enable_if< is_convertible< InputIt, typename container_type::iterator >::value >::type,
+              typename U = T, typename... Args, typename = typename enable_if< is_constructible< U, Args... >::value >::type >
+    void emplace(InputIt pos, Args... args);
 
-    typename container_type::iterator insert(const_iterator pos, const T& value);
-    typename container_type::iterator insert(const_iterator pos, T&& value);
-    typename container_type::iterator insert(const_iterator pos, size_type count, const T& value);
-    template< class InputIt >
-    typename container_type::iterator insert(const_iterator pos, InputIt first, InputIt last);
-    typename container_type::iterator insert(const_iterator pos, std::initializer_list< T > ilist);
+    template< class InputIt, typename = typename enable_if< is_convertible< InputIt, typename container_type::iterator >::value >::type >
+    void insert(InputIt pos, const T& value);
 
+    template< class InputIt, typename = typename enable_if< is_convertible< InputIt, typename container_type::iterator >::value >::type >
+    void insert(InputIt pos, T&& value);
 
+    template< class InputIt, typename = typename enable_if< is_convertible< InputIt, typename container_type::iterator >::value >::type >
+    void insert(InputIt pos, size_type count, const T& value);
 
+    template< typename InputIt, typename SourceIt, typename = typename enable_if< is_convertible< InputIt, typename container_type::iterator >::value >::type >
+    void insert(InputIt pos, SourceIt first, SourceIt last);
+
+    template< class InputIt, typename = typename enable_if< is_convertible< InputIt, typename container_type::iterator >::value >::type >
+    void insert(InputIt pos, std::initializer_list< T > ilist);
 
     //--------------------------------------------------------------------------
     /// @brief      Erases element @ given *pos*.
     ///
     /// @param[in]  pos   Iterator to element to erase.
     ///
-    /// @return     Iterator to first element after *pos*.
-    ///
-    typename container_type::iterator erase(const_iterator pos);
+    template< class InputIt, typename = typename enable_if< is_convertible< InputIt, typename container_type::iterator >::value >::type >
+    void erase(InputIt pos);
 
     //--------------------------------------------------------------------------
     /// @brief      Erases elements @ range between *first* and *last*.
@@ -618,38 +688,43 @@ class indexer {
     ///
     /// @return     Iterator to first element after *pos*.
     ///
-    typename container_type::iterator erase(const_iterator first, const_iterator last);
+    template< class InputIt, typename = typename enable_if< is_convertible< InputIt, typename container_type::iterator >::value >::type >
+    void erase(InputIt first, InputIt last);
 
     //--------------------------------------------------------------------------
     /// @brief      Access first element in container.
     ///
     /// @return     Reference to first element.
     ///
-    reference front();
+    template < typename oT = value_type, typename C = Container, typename = typename enable_if< has_front< C >() >::type >
+    oT& front();
 
     //--------------------------------------------------------------------------
     /// @brief      Access first element in container.
     ///
     /// @return     *const* reference to first element.
     ///
-    const_reference front() const;
+    template < typename oT = value_type, typename C = Container, typename = typename enable_if< has_front< C >() >::type >
+    const oT& front() const;
 
     //--------------------------------------------------------------------------
     /// @brief      Access last element in container.
     ///
     /// @return     Reference to last element.
     ///
-    reference back();
+    template < typename oT = value_type, typename C = Container, typename = typename enable_if< has_back< C >() >::type >
+    oT& back();
 
     //--------------------------------------------------------------------------
     /// @brief      Access last element in container.
     ///
     /// @return     *const* reference to last element.
     ///
-    const_reference back() const;
+    template < typename oT = value_type, typename C = Container, typename = typename enable_if< has_back< C >() >::type >
+    const oT& back() const;
 
     //--------------------------------------------------------------------------
-    /// @brief      Creates a new element in-place.
+    /// @brief      Creates a new element in-place @ front of container.
     ///
     /// @param      args       Arguments passed to the element constructor.
     ///
@@ -657,13 +732,12 @@ class indexer {
     /// @tparam     <unnamed>  SFINAE check that shadows/disables constructor overload if *T* can't be constructed with *Args*
     ///                        i.e. T(Args..) is not declared/defined
     ///
-    /// @return     Reference to newly created element.
-    ///
-    template < typename U = T, typename... Args, typename = typename enable_if< is_constructible< U, Args... >::value >::type >
-    reference emplace_back(Args&&... args);
+    template < typename C = Container, typename = typename enable_if< is_front_emplaceable< C >() >::type,
+               typename U = T, typename... Args, typename = typename enable_if< is_constructible< U, Args... >::value >::type >
+    void emplace_front(Args&&... args);
 
     //--------------------------------------------------------------------------
-    /// @brief      Creates a new element in-place, w/ indexer key.
+    /// @brief      Creates a new element in-place @ front of container, w/ indexer key.
     ///
     /// @param      key        Key to assign to new element.
     /// @param      args       Arguments passed to the element constructor.
@@ -672,18 +746,82 @@ class indexer {
     /// @tparam     <unnamed>  SFINAE check that shadows/disables constructor overload if *T* can't be constructed with *Args*
     ///                        i.e. T(Args..) is not declared/defined
     ///
-    /// @return     Reference to newly created element.
-    ///
-    template < typename U = T, typename... Args, typename = typename enable_if< is_constructible< U, Args... >::value >::type >
-    reference emplace_back(const key_type& key, Args&&... args);
+    template < typename C = Container, typename = typename enable_if< is_front_emplaceable< C >() >::type,
+               typename U = T, typename... Args, typename = typename enable_if< is_constructible< U, Args... >::value >::type >
+    void emplace_front(const key_type& key, Args&&... args);
 
-    // // std::basic_string std::array std::deque std::vector
-    // reference back();  // -> add has_back
-    // const_reference back() const;
-    // // for string, vector, and deque -> add is_back_modifiable check to remove std::array
-    // push_back(const & );
-    // push_back(&& );
-    // void pop_back();
+    //--------------------------------------------------------------------------
+    /// @brief      Creates a new element in-place @ back of container.
+    ///
+    /// @param      args       Arguments passed to the element constructor.
+    ///
+    /// @tparam     Args  Variadic parameter pack (implicitely deduced) describing type list of constructor arguments.
+    /// @tparam     <unnamed>  SFINAE check that shadows/disables constructor overload if *T* can't be constructed with *Args*
+    ///                        i.e. T(Args..) is not declared/defined
+    ///
+    template < typename C = Container, typename = typename enable_if< is_back_emplaceable< C >() >::type,
+               typename U = T, typename... Args, typename = typename enable_if< is_constructible< U, Args... >::value >::type >
+    void emplace_back(Args&&... args);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Creates a new element in-place @ back of container, w/ indexer key.
+    ///
+    /// @param      key        Key to assign to new element.
+    /// @param      args       Arguments passed to the element constructor.
+    ///
+    /// @tparam     Args  Variadic parameter pack (implicitely deduced) describing type list of constructor arguments.
+    /// @tparam     <unnamed>  SFINAE check that shadows/disables constructor overload if *T* can't be constructed with *Args*
+    ///                        i.e. T(Args..) is not declared/defined
+    ///
+    template < typename C = Container, typename = typename enable_if< is_back_emplaceable< C >() >::type,
+               typename U = T, typename... Args, typename = typename enable_if< is_constructible< U, Args... >::value >::type >
+    void emplace_back(const key_type& key, Args&&... args);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Copies given *value* to @ front of container.
+    ///
+    /// @param      value      Value to add to the underlying container.
+    ///
+    template < typename C = Container, typename = typename enable_if< is_front_pushable< C >() >::type >
+    void push_front(value_type&& value);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Copies given *value* to @ front of container, w/ indexer key.
+    ///
+    /// @param      key        Key to assign to new element.
+    /// @param      value      Value to add to the underlying container.
+    ///
+    template < typename C = Container, typename = typename enable_if< is_front_pushable< C >() >::type >
+    void push_front(const key_type& key, value_type&& value);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Copies given *value* to @ back of container.
+    ///
+    /// @param      value      Value to add to the underlying container.
+    ///
+    template < typename C = Container, typename = typename enable_if< is_back_pushable< C >() >::type >
+    void push_back(value_type&& value);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Copies given *value* to @ back of container, w/ indexer key.
+    ///
+    /// @param      key        Key to assign to new element.
+    /// @param      value      Value to add to the underlying container.
+    ///
+    template < typename C = Container, typename = typename enable_if< is_back_pushable< C >() >::type >
+    void push_back(const key_type& key, value_type&& value);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Deletes/destroys element @ front of container
+    ///
+    template < typename C = Container, typename = typename enable_if< is_front_poppable< C >() >::type >
+    void pop_front();
+
+    //--------------------------------------------------------------------------
+    /// @brief      Deletes/destroys element @ back of container.
+    ///
+    template < typename C = Container, typename = typename enable_if< is_back_poppable< C >() >::type >
+    void pop_back();
 
  protected:
     //--------------------------------------------------------------------------
@@ -693,7 +831,7 @@ class indexer {
 };
 
 
-
+/// @cond DEFINITIONS
 
 template < typename Container, typename T, bool Locked >
 template < typename... Args, typename >
@@ -720,6 +858,19 @@ indexer< Container, T, Locked >::indexer(indexer< Container, T, oLocked >&& othe
     /* ... */
     assert(other.size() || !Locked && ("LOCKED CONTAINER CAN'T BE DEFAULT/EMPTY-INITIALIZED!"));
     _data = std::move(other._data);
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+indexer< Container, T, Locked >::indexer(std::initializer_list< T > data) {
+    /* ... */
+    // _data.reserve(data.size());  // requires Container to be std::vector!
+    for (auto& element : data) {
+        // since element_type and T are implicitely convertible/constructible
+        // calls element_type(const T&) copy constructor overload
+        _data.emplace_back(std::move(element));
+    }
 }
 
 
@@ -1028,7 +1179,7 @@ void indexer< Container, T, Locked >::swap(const indexer< Container, T, oLocked 
 
 
 template < typename Container, typename T, bool Locked >
-void indexer< Container, T, Locked >::assign( indexer< Container, T, Locked >::size_type count, const T& value) {
+void indexer< Container, T, Locked >::assign(indexer< Container, T, Locked >::size_type count, const T& value) {
     _data.assign(count, value);
 }
 
@@ -1050,15 +1201,16 @@ void indexer< Container, T, Locked >::assign(std::initializer_list< T > ilist) {
 
 
 template < typename Container, typename T, bool Locked >
-template < typename... Args >
-typename indexer< Container, T, Locked >::container_type::iterator indexer< Container, T, Locked >::emplace(typename indexer< Container, T, Locked >::const_iterator pos, Args... args) {
+template < typename InputIt, typename, typename, typename... Args, typename >
+void indexer< Container, T, Locked >::emplace(InputIt pos, Args... args) {
     return _data.emplace(pos, std::forward<Args>(args)...);
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::container_type::iterator indexer< Container, T, Locked >::insert(typename indexer< Container, T, Locked >::const_iterator pos, const T& value) {
+template < typename InputIt, typename >
+void indexer< Container, T, Locked >::insert(InputIt pos, const T& value) {
     // parse input iterator
     _data.insert(pos, value);
 }
@@ -1066,108 +1218,184 @@ typename indexer< Container, T, Locked >::container_type::iterator indexer< Cont
 
 
 template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::container_type::iterator indexer< Container, T, Locked >::insert(typename indexer< Container, T, Locked >::const_iterator pos, T&& value) {
+template < typename InputIt, typename >
+void indexer< Container, T, Locked >::insert(InputIt pos, T&& value) {
     _data.insert(pos, value);
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::container_type::iterator indexer< Container, T, Locked >::insert(typename indexer< Container, T, Locked >::const_iterator pos, typename indexer< Container, T, Locked >::size_type count, const T& value) {
+template < typename InputIt, typename >
+void indexer< Container, T, Locked >::insert(InputIt pos, typename indexer< Container, T, Locked >::size_type count, const T& value) {
     _data.insert(pos, count, value);
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-template< class InputIt >
-typename indexer< Container, T, Locked >::container_type::iterator indexer< Container, T, Locked >::insert(typename indexer< Container, T, Locked >::const_iterator pos, InputIt first, InputIt last) {
+template< class InputIt, typename SourceIt, typename >
+void indexer< Container, T, Locked >::insert(InputIt pos, SourceIt first, SourceIt last) {
     _data.insert(pos, first, last);
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::container_type::iterator indexer< Container, T, Locked >::insert(typename indexer< Container, T, Locked >::const_iterator pos, std::initializer_list< T > ilist) {
+template < typename InputIt, typename >
+void indexer< Container, T, Locked >::insert(InputIt pos, std::initializer_list< T > ilist) {
     _data.insert(pos, ilist);
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::container_type::iterator indexer< Container, T, Locked >::erase(typename indexer< Container, T, Locked >::const_iterator pos) {
-    return _data.erase(pos);
+template< class InputIt, typename >
+void indexer< Container, T, Locked >::erase(InputIt pos) {
+    // @note  cast_iterator< container_type > is implicitly convertible to container_type::iterator, we can just call underlying erase() overload
+    _data.erase(pos);
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::container_type::iterator indexer< Container, T, Locked >::erase(typename indexer< Container, T, Locked >::const_iterator first,
-                                                                                          typename indexer< Container, T, Locked >::const_iterator last) {
-    return _data.erase(first, last);
+template< class InputIt, typename >
+void indexer< Container, T, Locked >::erase(InputIt first, InputIt last) {
+    // @note  cast_iterator< container_type > is implicitly convertible to container_type::iterator, we can just call underlying erase() overload
+    _data.erase(first, last);
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-template < typename, typename... Args, typename >
-typename indexer< Container, T, Locked >::reference indexer< Container, T, Locked >::emplace_back(Args&&... args) {
-    return _data.emplace_back(std::forward<Args>(args)...);  // for return type, compile with C++17!!
-}
-
-
-
-template < typename Container, typename T, bool Locked >
-template < typename, typename... Args, typename >
-typename indexer< Container, T, Locked >::reference indexer< Container, T, Locked >::emplace_back(const typename indexer< Container, T, Locked >::key_type& key, Args&&... args) {
-    return _data.emplace_back(key, std::forward<Args>(args)...);  // for return type, compile with C++17!!
-}
-
-
-
-template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::reference indexer< Container, T, Locked >::front() {
+template < typename oT, typename, typename >
+oT& indexer< Container, T, Locked >::front() {
     return _data.front();
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::const_reference indexer< Container, T, Locked >::front() const {
+template < typename oT, typename, typename >
+const oT& indexer< Container, T, Locked >::front() const {
     return _data.front();
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::reference indexer< Container, T, Locked >::back() {
+template < typename oT, typename, typename >
+oT& indexer< Container, T, Locked >::back() {
     return _data.back();
 }
 
 
 
 template < typename Container, typename T, bool Locked >
-typename indexer< Container, T, Locked >::const_reference indexer< Container, T, Locked >::back() const {
+template < typename oT, typename, typename >
+const oT& indexer< Container, T, Locked >::back() const {
     return _data.back();
 }
 
 
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename, typename, typename... Args, typename >
+void indexer< Container, T, Locked >::emplace_front(Args&&... args) {
+    _data.emplace_front(std::forward<Args>(args)...);  // for return type, compile with C++17!!
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename, typename, typename... Args, typename >
+void indexer< Container, T, Locked >::emplace_front(const typename indexer< Container, T, Locked >::key_type& key, Args&&... args) {
+    _data.emplace_front(key, std::forward<Args>(args)...);  // for return type, compile with C++17!!
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename, typename, typename... Args, typename >
+void indexer< Container, T, Locked >::emplace_back(Args&&... args) {
+    _data.emplace_back(std::forward<Args>(args)...);  // for return type, compile with C++17!!
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename, typename, typename... Args, typename >
+void indexer< Container, T, Locked >::emplace_back(const typename indexer< Container, T, Locked >::key_type& key, Args&&... args) {
+    _data.emplace_back(key, std::forward<Args>(args)...);  // for return type, compile with C++17!!
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename >
+void indexer< Container, T, Locked >::push_front(typename indexer< Container, T, Locked >::value_type&& value) {
+    _data.push_front(std::forward< value_type >(value));
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename >
+void indexer< Container, T, Locked >::push_front(const indexer< Container, T, Locked >::key_type& key, typename indexer< Container, T, Locked >::value_type&& value) {
+    _data.push_front(std::forward< value_type >(value));
+    _data.front().key = key;
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename >
+void indexer< Container, T, Locked >::push_back(typename indexer< Container, T, Locked >::value_type&& value) {
+    _data.push_back(std::forward< value_type >(value));
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename >
+void indexer< Container, T, Locked >::push_back(const indexer< Container, T, Locked >::key_type& key, typename indexer< Container, T, Locked >::value_type&& value) {
+    _data.push_back(std::forward< value_type >(value));
+    _data.back().key = key;
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename >
+void indexer< Container, T, Locked >::pop_front() {
+    _data.pop_front();
+}
+
+
+
+template < typename Container, typename T, bool Locked >
+template < typename, typename >
+void indexer< Container, T, Locked >::pop_back() {
+    _data.pop_back();
+}
+
+/// @endcond
 
 //------------------------------------------------------------------------------
-
-
-// Container requirements:
-
-// template< class T, class Alloc >
-// constexpr bool operator==(const std::indexer<  >& lhs, const std::indexer<  >& rhs );
-
-
-// template< class T, class Alloc >
-// void swap( std::vector<T,Alloc>& lhs,
-//            std::vector<T,Alloc>& rhs ) noexcept;
-
-
-
+/// @brief      Utility constructor that allows inline initialization of an indexer object and its key set.
+///
+/// @param[in]  keys       Key values to be assigned to elements of resulting indexer<>.
+/// @param[in]  args       Argument list to be passed to the constructor.
+///
+/// @tparam     Container  Generic container of key/tagged type instances.
+///                        Must fit STL's Container & SequenceContainer (partial) requirements.
+/// @tparam     T          Public/interface type.
+/// @tparam     Locked     Whether runtime size manipulation is allowed after initialization.
+///                        Useful when size of the container does not change but elements do.
+/// @tparam     Args       Variadic parameter pack describing types of arguments passed to constructor.
+///
+/// @return     indexer<> instance with given *keys*.
+///
 template <typename Container, typename T = typename Container::value_type, bool Locked = false, typename... Args >
 indexer< Container, T, Locked > make_indexer(const initializer_list< typename indexer< Container, T, Locked >::key_type > keys, Args... args) {
     auto obj = indexer< Container, T, Locked >(args...);

@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include "sensor.hpp"           // trigno::Sensor
+#include "duration.hpp"         // trigno::Duration
 #include "configuration.hpp"    // trigno::network::MultiSensorConfiguration, trigno::network::ConnectionConfiguration
 #include "frame.hpp"            // trigno::Frame
 #include "emg_data_client.hpp"
@@ -8,21 +9,21 @@
 namespace trigno::network {
 
 EMGDataClient::EMGDataClient(MultiSensorConfiguration* configuration) :
-    BasicDataClient(ConnectionConfiguration::EMG_DATA_CHANNELS_PER_SENSOR * sensor::ID::MAX, configuration) {
+    BasicDataClient(ConnectionConfiguration::EMG_DATA_CHANNELS_PER_SENSOR * (sensor::ID::MAX + 1), configuration) {
         /* ... */
 }
 
 
 
-EMGDataClient::EMGDataClient(MultiSensorConfiguration* configuration, const std::string& address, size_t emg_data_port, const EMGDataClient::Timeout& timeout) :
-    BasicDataClient(ConnectionConfiguration::EMG_DATA_CHANNELS_PER_SENSOR * sensor::ID::MAX, configuration, address, emg_data_port, timeout) {
+EMGDataClient::EMGDataClient(MultiSensorConfiguration* configuration, const std::string& address, size_t emg_data_port, const Duration& timeout) :
+    BasicDataClient(ConnectionConfiguration::EMG_DATA_CHANNELS_PER_SENSOR * (sensor::ID::MAX + 1), configuration, address, emg_data_port, timeout) {
         /* ... */
         // no need to connect, BasicDataClient establishes connection on constructor!
 }
 
 
 
-void EMGDataClient::connect(const std::string& address, size_t port, const EMGDataClient::Timeout& timeout) {
+void EMGDataClient::connect(const std::string& address, size_t port, const Duration& timeout) {
     // delegates to base implementation (but with different default arguments!)
     BasicDataClient::connect(address, port, timeout);
 }
@@ -40,7 +41,7 @@ void EMGDataClient::reset() {
             return;
         }
     }
-    throw std::runtime_error("[" + std::string(__func__) + "] No active EMG channels!");
+    // throw std::runtime_error("[" + std::string(__func__) + "] No active EMG channels!");
 }
 
 
@@ -60,29 +61,13 @@ Frame EMGDataClient::buildFrame(const sensor::List& sensors) const {
             continue;
         }
         // get start index from configuration
-        auto pos = (*_configuration)[sensor_id].startIndex();
+        auto pos = (*_configuration)[sensor_id].startIndex() - 1;
         // add sample to frame
         // @note       raw data is parsed by trigno::Sample constructor
         out.emplace_back(sensor_id, (*_configuration)[sensor_id].nEMGChannels(), &_buffer[pos * sizeof(DataValue)]);
         // preserve sensor label in output frame
         out.elements().back().key = _configuration->element(sensor_id).key;
     }
-
-    // // parse only requested values/sensors
-    // // @note configuration must be up to date!
-    // for (const Sensor& sensor : *_configuration) {
-    //     // check if active, skip if not
-    //     if (!_sensor.isActive()) {
-    //         continue;
-    //     }
-    //     // get start index from configuration
-    //     auto pos = _sensor.startIndex();
-    //     // add sample to frame
-    //     // @note       raw data is parsed by trigno::Sample constructor
-    //     out.emplace_back(sensor.id(), sensor.nEMGChannels(), &_buffer[pos * sizeof(DataValue)]);
-    //     // preserve sensor label in output frame
-    //     out.elements().back().key = _configuration->element(sensor).key;
-    // }
 
     return out;
 }

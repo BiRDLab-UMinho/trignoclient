@@ -74,6 +74,19 @@ Frame::Frame(const Frame& frame, const sensor::Labels& sensor_labels) :
 
 
 
+sensor::List Frame::sensors() const {
+    sensor::List out;
+    out.reserve(sensor::ID::MAX + 1);
+
+    for (const auto& sensor : *this) {
+        out.emplace_back(sensor.id());
+    }
+
+    return out;
+}
+
+
+
 size_t Frame::dim() const noexcept {
     size_t dim = 0;
     for (const auto& sensor : *this) {
@@ -88,6 +101,7 @@ void Frame::set(const std::vector< Sample::Value >& values) {
     if (!values.size()) {
         throw std::invalid_argument("[...]");
     }
+    std::cout << "///" << std::endl;
     // for multiple values
     if (values.size() >= dim()) {
         size_t idx = 0;

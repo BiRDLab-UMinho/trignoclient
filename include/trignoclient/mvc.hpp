@@ -47,5 +47,4 @@ class MVC : public BasicProtocol {
 
 }  // namespace trigno::tools
 
-
 #endif  // TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_MVC_HPP_

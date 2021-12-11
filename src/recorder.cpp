@@ -17,14 +17,14 @@ Recorder::Recorder(trigno::network::BasicDataClient* data_client, trigno::Sequen
 
 void Recorder::run(Duration time, const sensor::List& sensors) {
     _sensors = sensors;
-    run(time);
+    basic_timed_executor::run(time);
 }
 
 
 
 void Recorder::launch(Duration time, const sensor::List& sensors) {
     _sensors = sensors;
-    launch(time);
+    basic_timed_executor::launch(time);
 }
 
 

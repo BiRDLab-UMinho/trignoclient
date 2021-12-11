@@ -13,8 +13,6 @@
 #define TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_SEQUENCE_HPP_
 
 #include <deque>
-#include <string>
-#include <iostream>
 #include "std/sorted_indexer.hpp"  // std::series<>
 #include "std/range_iterator.hpp"  // std::range_iterator<>
 #include "frame.hpp"               // trigno::Frame
@@ -63,7 +61,7 @@ class Sequence : public std::series< Frame, Frame::TimeStamp > /* a.k.a. std::so
     /// @brief      Constructs a new (empty) instance.
     ///
     Sequence() = default;
-    
+
     //--------------------------------------------------------------------------
     /// @brief      Discards *n_samples* older samples (@ front of container).
     ///
@@ -76,57 +74,110 @@ class Sequence : public std::series< Frame, Frame::TimeStamp > /* a.k.a. std::so
     //--------------------------------------------------------------------------
     /// @brief      Adds the specified frame, *copying* it into internal container.
     ///
-    /// @param[in]  frame  Input data frame.
+    /// @param[in]  frame          Input data frame.
+    /// @param[in]  sequential     Sequential check flag. If true, checks if input time stamp is incremental.
+    ///                            Defaults to false (for versatility && performance reasons).
+    /// @param[in]  match_sensors  Match content flag. If true, checks if input sensors match back of sequence.
+    ///                            Defaults to false (for versatility && performance reasons).
     ///
-    void add(const Frame::Stamped& frame);
-
-    //--------------------------------------------------------------------------
-    /// @brief      Adds the specified frame, *copying* it into internal container.
+    /// @throw      std::invalid_argument if *sequential* is true and *time* is not greater than last frame in sequence.
+    /// @throw      std::invalid_argument if *match_sensors* is true and *frame* sensor list is not equal to this->back().sensors().
     ///
-    /// @param[in]  time   Time stamp.
-    /// @param[in]  frame  Input data frame.
+    /// @note       Runtime content check adds versatility, but also overhead, thus discouraged in performance-sensitive applications.
+    ///             In such cases, an alternative is to load frames wo/ checking content and sorting afterwards w/ sort()
     ///
-    /// @throw      std::invalid_argument if *time* is not greater than last frame in sequence.
-    ///
-    void add(const Frame::TimeStamp& time, const Frame& frame);
+    void add(const Frame::Stamped& frame, bool sequential = false, bool match_sensors = false);
 
     //--------------------------------------------------------------------------
     /// @brief      Adds the specified frame, *moving* it into internal container.
     ///
+    /// @param[in]  frame          Input (movable) data frame (as rvalue reference).
+    /// @param[in]  sequential     Sequential check flag. If true, checks if input time stamp is incremental.
+    ///                            Defaults to false (for versatility && performance reasons).
+    /// @param[in]  match_sensors  Match content flag. If true, checks if input sensors match back of sequence.
+    ///                            Defaults to false (for versatility && performance reasons).
+    ///
+    /// @throw      std::invalid_argument if *sequential* is true and *time* is not greater than last frame in sequence.
+    /// @throw      std::invalid_argument if *match_sensors* is true and *frame* sensor list is not equal to this->back().sensors().
+    ///
+    /// @note       Runtime content check adds versatility, but also overhead, thus discouraged in performance-sensitive applications.
+    ///             In such cases, an alternative is to load frames wo/ checking content and sorting afterwards w/ sort()
+    ///
+    void add(Frame::Stamped&& frame, bool sequential = false, bool match_sensors = false);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Adds the specified frame with given time stamp, *copying* it into internal container.
+    ///
+    /// @param[in]  time           Time stamp.
+    /// @param[in]  frame          Input data frame.
+    /// @param[in]  sequential     Sequential check flag. If true, checks if input time stamp is incremental.
+    ///                            Defaults to false (for versatility && performance reasons).
+    /// @param[in]  match_sensors  Match content flag. If true, checks if input sensors match back of sequence.
+    ///                            Defaults to false (for versatility && performance reasons).
+    ///
+    /// @throw      std::invalid_argument if *sequential* is true and *time* is not greater than last frame in sequence.
+    /// @throw      std::invalid_argument if *match_sensors* is true and *frame* sensor list is not equal to this->back().sensors().
+    ///
+    /// @note       Runtime content check adds versatility, but also overhead, thus discouraged in performance-sensitive applications.
+    ///             In such cases, an alternative is to load frames wo/ checking content and sorting afterwards w/ sort()
+    ///
+    void add(const Frame::TimeStamp& time, const Frame& frame, bool sequential = false, bool match_sensors = false);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Adds the specified frame with given time stamp, *moving* it into internal container.
+    ///
+    /// @param[in]  time           Time stamp.
+    /// @param[in]  frame          Input data frame.
+    /// @param[in]  sequential     Sequential check flag. If true, checks if input time stamp is incremental.
+    ///                            Defaults to false (for versatility && performance reasons).
+    /// @param[in]  match_sensors  Match content flag. If true, checks if input sensors match back of sequence.
+    ///                            Defaults to false (for versatility && performance reasons).
+    ///
+    /// @throw      std::invalid_argument if *sequential* is true and *time* is not greater than last frame in sequence.
+    /// @throw      std::invalid_argument if *match_sensors* is true and *frame* sensor list is not equal to this->back().sensors().
+    ///
+    /// @note       Runtime content check adds versatility, but also overhead, thus discouraged in performance-sensitive applications.
+    ///             In such cases, an alternative is to load frames wo/ checking content and sorting afterwards w/ sort()
+    ///
+    void add(const Frame::TimeStamp& time, Frame&& frame, bool sequential = false, bool match_sensors = false);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Adds the specified frame, *copying* it into internal container.
+    ///
     /// @param[in]  frame  Input data frame.
     ///
-    /// @note       By design, input *Frame* is moved/consumed into internal container, i.e. its contents are not available afterwards.
+    /// @note       Equivalent to add(), provided for cleaner syntax and higher verbosity.
     ///
-    Sequence& operator<<(Frame::Stamped& frame);
+    Sequence& operator<<(const Frame::Stamped& frame);
 
     //--------------------------------------------------------------------------
     /// @brief      Adds the specified frame, *moving* it into internal container.
     ///
     /// @param[in]  frame  Input data frame (as move reference).
     ///
-    /// @note       By design, input *Frame* is moved/consumed into internal container, i.e. its contents are not available afterwards.
+    /// @note       Equivalent to add(), provided for cleaner syntax and higher verbosity.
     ///
     /// @note       Overload provided to accept rvalue references as argument e.g. when fetching directly from a data client (frame << client.read()).
     ///
     Sequence& operator<<(Frame::Stamped&& frame);
 
     //--------------------------------------------------------------------------
-    /// @brief      Adds the specified sequence, *moving* it (i.e. all its frames) into internal container.
+    /// @brief      Adds the specified sequence range, *copying* it (i.e. all its frames) into internal container.
     ///
-    /// @param[in]  sequence  Input data sequence.
+    /// @param[in]  range  Input data range (or sequence).
     ///
-    /// @note       By design, input *Sequence* is moved/consumed into internal container, i.e. its contents are not available afterwards.
+    /// @note       If input range has a large size, it becomes a costly operation.
     ///
-    Sequence& operator<<(Sequence& sequence);
+    /// @note       Sequence is implicitly convertible to Sequence::ConstRange, thus operator overload is called when adding two Sequence instances.
+    ///
+    Sequence& operator<<(Sequence::ConstRange range);
 
     //--------------------------------------------------------------------------
     /// @brief      Adds the specified sequence, *moving* it (i.e. all its frames) into internal container.
     ///
-    /// @param[in]  frame  Input data frame (as move reference).
+    /// @param[in]  sequence  Input (movable) sequence (as rvalue reference).
     ///
-    /// @note       By design, input *Sequence* is moved/consumed into internal container, i.e. its contents are not available afterwards.
-    ///
-    /// @note       Overload provided to accept rvalue references as argument e.g. when fetching directly from a data client (sequence << client.read()).
+    /// @note       By design, input *sequence* is moved/consumed into internal container, i.e. its contents are not available afterwards.
     ///
     Sequence& operator<<(Sequence&& sequence);
 
@@ -216,7 +267,7 @@ class Sequence : public std::series< Frame, Frame::TimeStamp > /* a.k.a. std::so
     ///
     /// @return     Instance of Signal with data for specified sensor/channel.
     ///
-    static Signal extract(const Range& range, sensor::ID id, size_t channel = 0);
+    static Signal extract(ConstRange range, sensor::ID id, size_t channel = 0);
 
     //--------------------------------------------------------------------------
     /// @brief      Builds a Signal instance holding channel data for given sensor *label* and given *channel*.
@@ -228,7 +279,7 @@ class Sequence : public std::series< Frame, Frame::TimeStamp > /* a.k.a. std::so
     ///
     /// @return     Instance of Signal with data for specified sensor/channel.
     ///
-    static Signal extract(const Range& range, const sensor::Label& sensor_label, size_t channel = 0);
+    static Signal extract(ConstRange range, const sensor::Label& sensor_label, size_t channel = 0);
 };
 
 }  // namespace trigno

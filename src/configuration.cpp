@@ -4,15 +4,13 @@
 #include <utility>
 #include <cassert>
 #include <future>                   // std::async
-#include "std/not_implemented.hpp"  // std::not_implemented
+#include "std/exception.hpp"        // std::not_implemented
 #include "std/indexer.hpp"          // std::index<>
 #include "interface.hpp"            // trigno::network::Interface
 #include "basic_configurator.hpp"   // trigno::network::BasicConfigurator
 #include "configuration.hpp"
 
 namespace trigno::network {
-
-// constexpr size_t SensorConfiguration::NSENSORS = 16;
 
 SensorConfiguration::SensorConfiguration(sensor::ID id, Interface* network) :
     BasicConfigurator(network),
@@ -50,7 +48,7 @@ bool SensorConfiguration::get() {
 
     try {
         // pair state
-        _network->query("SENSOR " + std::to_string(_id) + " PAIRED?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " PAIRED?", &response);
         if (!response.empty()) {
             _paired = (response == "YES") ? true : false;
         }
@@ -67,7 +65,7 @@ bool SensorConfiguration::get() {
     try {
         // active state
         // @note       checking active before paired a
-        _network->query("SENSOR " + std::to_string(_id) + " ACTIVE?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " ACTIVE?", &response);
         if (!response.empty()) {
             _active = (response == "YES") ? true : false;
         }
@@ -83,7 +81,7 @@ bool SensorConfiguration::get() {
 
     try {
         // sensor type
-        _network->query("SENSOR " + std::to_string(_id) + " TYPE?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " TYPE?", &response);
         if (!response.empty()) {
             _type = response.front();
         }
@@ -93,7 +91,7 @@ bool SensorConfiguration::get() {
 
     try {
         // sensor operating mode
-        _network->query("SENSOR " + std::to_string(_id) + " MODE?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " MODE?", &response);
         if (!response.empty()) {
             _mode = atoi(response.data());
         }
@@ -103,7 +101,7 @@ bool SensorConfiguration::get() {
 
     try {
         // total number of channels (mode-dependent)
-        _network->query("SENSOR " + std::to_string(_id) + " CHANNELCOUNT?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " CHANNELCOUNT?", &response);
         if (!response.empty()) {
             _n_channels = atoi(response.data());
             _n_samples_frame.resize(_n_channels);
@@ -117,7 +115,7 @@ bool SensorConfiguration::get() {
 
     try {
         // total number of EMG channels (mode-dependent)
-        _network->query("SENSOR " + std::to_string(_id) + " EMGCHANNELCOUNT?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " EMGCHANNELCOUNT?", &response);
         if (!response.empty()) {
             _n_emg_channels = atoi(response.data());
         }
@@ -127,7 +125,7 @@ bool SensorConfiguration::get() {
 
     try {
         // total number of AUX channels (mode-dependent)
-        _network->query("SENSOR " + std::to_string(_id) + " AUXCHANNELCOUNT?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " AUXCHANNELCOUNT?", &response);
         if (!response.empty()) {
             _n_aux_channels = atoi(response.data());
         }
@@ -138,7 +136,7 @@ bool SensorConfiguration::get() {
     try {
         // start index of sensor data in data frame
         response.clear();
-        _network->query("SENSOR " + std::to_string(_id) + " STARTINDEX?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " STARTINDEX?", &response);
         if (!response.empty()) {
             _start_index = atoi(response.data());
         }
@@ -148,7 +146,7 @@ bool SensorConfiguration::get() {
 
     try {
         // firmware version
-        _network->query("SENSOR " + std::to_string(_id) + " FIRMWARE?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " FIRMWARE?", &response);
         if (!response.empty() && response.find("INVALID") != std::string::npos) {
             _firmware = response;
         }
@@ -158,7 +156,7 @@ bool SensorConfiguration::get() {
 
     try {
         // serial number
-        _network->query("SENSOR " + std::to_string(_id) + " SERIAL?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " SERIAL?", &response);
         if (!response.empty() && response.find("INVALID") != std::string::npos) {
             _serial = response;
         }
@@ -170,7 +168,7 @@ bool SensorConfiguration::get() {
         // samples p/frame for each channel (mode-dependent)`
         // @note sensor/channel number must be >0, otherwise TCA will crash!
         for (int ch = 0; ch < _n_channels; ch++) {
-            _network->query("SENSOR " + std::to_string(_id) + " CHANNEL " + std::to_string(ch + 1) + " SAMPLES?", &response);
+            _network->query("SENSOR " + std::to_string(_id + 1) + " CHANNEL " + std::to_string(ch + 1) + " SAMPLES?", &response);
             if (!response.empty()) {
                 _n_samples_frame[ch] = atoi(response.data());
             }
@@ -183,7 +181,7 @@ bool SensorConfiguration::get() {
         // samples p/frame for each channel (mode-dependent)
         // @note sensor/channel number must be >0, otherwise TCA will crash!
         for (int ch = 0; ch < _n_channels; ch++) {
-            _network->query("SENSOR " + std::to_string(_id) + " CHANNEL " + std::to_string(ch + 1) + " RATE?", &response);
+            _network->query("SENSOR " + std::to_string(_id + 1) + " CHANNEL " + std::to_string(ch + 1) + " RATE?", &response);
             if (!response.empty()) {
                 _sample_rate[ch] = atof(response.data());
             }
@@ -196,7 +194,7 @@ bool SensorConfiguration::get() {
         // gain for each channel (mode-dependent)
         // @note sensor/channel number must be >0, otherwise TCA will crash!
         for (int ch = 0; ch < _n_channels; ch++) {
-            _network->query("SENSOR " + std::to_string(_id) + " CHANNEL " + std::to_string(ch + 1) + " GAIN?", &response);
+            _network->query("SENSOR " + std::to_string(_id + 1) + " CHANNEL " + std::to_string(ch + 1) + " GAIN?", &response);
             if (!response.empty()) {
                 _gain[ch] = atof(response.data());
             }
@@ -209,7 +207,7 @@ bool SensorConfiguration::get() {
         // gain for each channel (mode-dependent)
         // @note sensor/channel number must be >0, otherwise TCA will crash!
         for (int ch = 0; ch < _n_channels; ch++) {
-            _network->query("SENSOR " + std::to_string(_id) + " CHANNEL " + std::to_string(ch + 1) + " UNITS?", &response);
+            _network->query("SENSOR " + std::to_string(_id + 1) + " CHANNEL " + std::to_string(ch + 1) + " UNITS?", &response);
             if (!response.empty()) {
                 _units[ch] = response;
             }
@@ -220,7 +218,7 @@ bool SensorConfiguration::get() {
 
     try {
         // sensor type
-        _network->query("SENSOR " + std::to_string(_id) + " RANGE?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " RANGE?", &response);
         if (response == "LOW") {
             _low_range = true;
         } else if (response == "HIGH") {
@@ -233,7 +231,7 @@ bool SensorConfiguration::get() {
 
     try {
         // sensor type
-        _network->query("SENSOR " + std::to_string(_id) + " BANDWIDTH?", &response);
+        _network->query("SENSOR " + std::to_string(_id + 1) + " BANDWIDTH?", &response);
         if (response == "NARROW") {
             _narrow_bandwidth = true;
         } else if (response == "WIDE") {
@@ -372,7 +370,7 @@ bool SensorConfiguration::isActive() const noexcept {
 bool SensorConfiguration::pair() {
     /* .. */
     std::string response;
-    _network->query("SENSOR " + std::to_string(_id) + " PAIR", &response);
+    _network->query("SENSOR " + std::to_string(_id + 1) + " PAIR", &response);
     // block until any message with 'COMPLETE' is received
     if (_network->waitFor("COMPLETE")) {
         return true;
@@ -385,7 +383,7 @@ bool SensorConfiguration::pair() {
 bool SensorConfiguration::setMode(size_t mode) {
     /* .. */
     std::string response;
-    _network->query("SENSOR " + std::to_string(_id) + " SETMODE" + std::to_string(mode), &response);
+    _network->query("SENSOR " + std::to_string(_id + 1) + " SETMODE" + std::to_string(mode), &response);
     // parse response and check success state
     if (response.find("OK") != std::string::npos) {
         _mode = mode;
@@ -399,7 +397,7 @@ bool SensorConfiguration::setMode(size_t mode) {
 bool SensorConfiguration::setRange(bool low) {
     /* .. */
     std::string response;
-    _network->query("SENSOR " + std::to_string(_id) + " SETRANGE" + (low ? "LOW" : "HIGH"), &response);
+    _network->query("SENSOR " + std::to_string(_id + 1) + " SETRANGE" + (low ? "LOW" : "HIGH"), &response);
     // parse response and check success state
     if (response.find("OK") != std::string::npos) {
         _low_range = low;
@@ -413,7 +411,7 @@ bool SensorConfiguration::setRange(bool low) {
 bool SensorConfiguration::setBandwidth(bool narrow) {
     /* .. */
     std::string response;
-    _network->query("SENSOR " + std::to_string(_id) + " SETBANDWITH" + (narrow ? "NARROW" : "WIDE"), &response);
+    _network->query("SENSOR " + std::to_string(_id + 1) + " SETBANDWITH" + (narrow ? "NARROW" : "WIDE"), &response);
     // parse response and check success state
     if (response.find("OK") != std::string::npos) {
         _narrow_bandwidth;
@@ -505,12 +503,29 @@ const std::string& BaseInformation::firmware() const noexcept {
 
 MultiSensorConfiguration::MultiSensorConfiguration(Interface* network) :
     // @note base class std::index can't be empty initialized due to being locked
-    std::index< SensorConfiguration, std::string, true >(sensor::ID::MAX + 1, SensorConfiguration(sensor::ID::_1, network)) {
-        // @note       sensor indexing begins at '1'
-        for (size_t idx = sensor::ID::_1; idx <= sensor::ID::MAX; idx++) {
-            _data[idx].get()._id = static_cast< sensor::ID >(idx);
-            key(idx) = "SENSOR #" + std::to_string(idx);
-        }
+    //       additionally, calling size constructor will copy passed element (tagged elements are pointers)
+    std::index< SensorConfiguration, std::string, true > ({
+        SensorConfiguration(sensor::ID::_1, network),
+        SensorConfiguration(sensor::ID::_2, network),
+        SensorConfiguration(sensor::ID::_3, network),
+        SensorConfiguration(sensor::ID::_4, network),
+        SensorConfiguration(sensor::ID::_5, network),
+        SensorConfiguration(sensor::ID::_6, network),
+        SensorConfiguration(sensor::ID::_7, network),
+        SensorConfiguration(sensor::ID::_8, network),
+        SensorConfiguration(sensor::ID::_9, network),
+        SensorConfiguration(sensor::ID::_10, network),
+        SensorConfiguration(sensor::ID::_11, network),
+        SensorConfiguration(sensor::ID::_12, network),
+        SensorConfiguration(sensor::ID::_13, network),
+        SensorConfiguration(sensor::ID::_14, network),
+        SensorConfiguration(sensor::ID::_15, network),
+        SensorConfiguration(sensor::ID::_16, network)
+    }) {
+        // no default labels!
+        // for (size_t idx = sensor::ID::_1; idx <= sensor::ID::MAX; idx++) {
+        //     key(idx) = "SENSOR #" + std::to_string(idx + 1);
+        // }
 }
 
 
@@ -633,40 +648,44 @@ const SystemControl::Trigger& SystemControl::trigger() const {
 
 
 
-bool SystemControl::start(float delay) {
+std::future< bool > SystemControl::start(const Duration& time) {
     /* .. */
     if (!_network->command("MASTER?", "YES")) {
-        throw std::runtime_error("Connection is not master!");
+        throw std::runtime_error("[" + std::string(__func__) + "] Connection is not master!");
     }
 
-    if (delay > 0.0) {
-        auto sent = std::async(std::launch::async, [this] { this->_network->command("START"); });
-    } else {
-        _network->command("START");
+    if (this->_network->command("START")) {
+        _running = true;
     }
 
+    std::future< bool > ret;
+    // return ret;
 
-    _running = true;
+    printf("1..\n");
+    if (time.count() > 0) {
+        // send stop command asyncrhononously
+        ret = std::async(std::launch::async, [this, time] {
+            std::this_thread::sleep_for(time);
+            return this->_network->command("STOP");
+        });
+    }
+    printf("2..\n");
 
-    return true;
+    return ret;
 }
 
 
 
-bool SystemControl::stop(float delay) {
+bool SystemControl::stop() {
     /* .. */
     if (!_network->command("MASTER?", "YES")) {
-        throw std::runtime_error("Connection is not master!");
+        throw std::runtime_error("[" + std::string(__func__) + "] Connection is not master!");
     }
 
-    if (delay > 0.0) {
-        auto sent = std::async(std::launch::async, [this] { this->_network->command("STOP"); });
-    } else {
-        _network->command("STOP");
+    if (_network->command("STOP")) {
+        _running = false;
     }
-
-    _running = false;
-    return true;
+    return !_running;
 }
 
 

@@ -19,6 +19,7 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
+#include "exception.hpp"   // std::timed_out
 
 namespace std {
 
@@ -331,7 +332,8 @@ inline void tcp_client::connect(const std::string& address, int port, const chro
     //       therefore, *operation_aborted* is thrown in  that case (and operation exit error code if unsuccessful with socket still open)
     // @note can/should be done on handle_connect();
     if (_error || !_socket.is_open()) {
-        throw boost::system::system_error(_error ? _error : boost::asio::error::operation_aborted);
+        // throw boost::system::system_error(_error ? _error : boost::asio::error::operation_aborted);
+        throw std::runtime_error("[" + std::string(__func__) + "] Unable to connect!");
     }
 }
 
@@ -373,7 +375,8 @@ inline void tcp_client::read(Buffer& buffer, const chrono::milliseconds& timeout
     //       therefore, *operation_aborted* is thrown in  that case (and operation exit error code if unsuccessful with socket still open)
     // @note can/should be done on handle_read();
     if (_error || !_socket.is_open()) {
-        throw boost::system::system_error(_error ? _error : boost::asio::error::operation_aborted);
+        // throw boost::system::system_error(_error ? _error : boost::asio::error::operation_aborted);
+        throw std::runtime_error("[" + std::string(__func__) + "] Unable to read!");
     }
 }
 
@@ -390,12 +393,12 @@ inline tcp_client::static_buffer< Size > tcp_client::read(const chrono::millisec
 
 template < typename Buffer >
 inline void tcp_client::read_until(char stop, Buffer& buffer, const chrono::milliseconds& timeout) {
-    // // set timeout for the asynchronous operation.
-    // // @note: async_read will populate entire buffer, timeout applies to the entire operation (*Size* reads from remote host)
+    // set timeout for the asynchronous operation.
+    // @note: async_read will populate entire buffer, timeout applies to the entire operation (*Size* reads from remote host)
     // _timer.expires_from_now(timeout);
 
-    // // reset error state
-    // // @note *would_block* signals incomplete operations. boost::asio asynchronous calls will never fail with *would_block*
+    // reset error state
+    // @note *would_block* signals incomplete operations. boost::asio asynchronous calls will never fail with *would_block*
     // _error = boost::asio::error::would_block;
     reset(timeout);
 
@@ -413,7 +416,8 @@ inline void tcp_client::read_until(char stop, Buffer& buffer, const chrono::mill
     //       therefore, *operation_aborted* is thrown in  that case (and operation exit error code if unsuccessful with socket still open)
     // @note can/should be done on handle_read();
     if (_error || !_socket.is_open()) {
-        throw boost::system::system_error(_error ? _error : boost::asio::error::operation_aborted);
+        // throw boost::system::system_error(_error ? _error : boost::asio::error::operation_aborted);
+        throw std::runtime_error("[" + std::string(__func__) + "] Unable to read!");
     }
 }
 
@@ -452,7 +456,8 @@ inline void tcp_client::write(const Buffer& data, const chrono::milliseconds& ti
     //       therefore, *operation_aborted* is thrown in  that case (and operation exit error code if unsuccessful with socket still open)
     // @note can/should be done on handle_read();
     if (_error || !_socket.is_open()) {
-        throw boost::system::system_error(_error ? _error : boost::asio::error::operation_aborted);
+        // throw boost::system::system_error(_error ? _error : boost::asio::error::operation_aborted);
+        throw std::runtime_error("[" + std::string(__func__) + "] Unable to write!");
     }
 }
 
@@ -472,7 +477,8 @@ inline bool tcp_client::check_timeout() {
         reset();
 
         // throw timed_out exception
-        throw boost::asio::error::timed_out;
+        // throw boost::asio::error::timed_out;
+        throw std::timed_out(__func__);
 
         return true;
     }

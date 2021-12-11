@@ -99,8 +99,9 @@ template < typename... Args, typename >
 Iterative< Processor >::Iterative(Args&&... args) :
     BasicSequenceProcessor(),
     _executor(std::forward<Args>(args)...),
-    _idle_time(Duration(1.0)) /* 1s default idle duration */ {
+    _idle_time(Duration(1000)) /* 1s default idle duration */ {
         /* ... */
+        _kill = false;
 }
 
 
@@ -123,7 +124,7 @@ template < typename Processor >
 bool Iterative< Processor >::active() const {
     if (_range == _range + 1) {
         std::this_thread::sleep_for(_idle_time);
-        return (_range == _range + 1);
+        return (_range != _range + 1);
     }
     return true;
 }
@@ -132,10 +133,13 @@ bool Iterative< Processor >::active() const {
 
 template < typename Processor >
 void Iterative< Processor >::execute() {
+    // run executor operation
     _executor.run(_range);
+    // iterate range
+    // @note if element length is being modified (e.g. elements are being erased) iterator still refer to original size
+    //       by design, it is up to the user to account for such cases
     _range++;
 }
-
 
 }  // namespace trigno::tools
 

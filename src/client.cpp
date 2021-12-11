@@ -1,4 +1,5 @@
 #include <string>
+#include <exception>
 #include "duration.hpp"         // trigno::Duration
 #include "interface.hpp"        // trigno::network::Interface
 #include "configuration.hpp"    // trigno::network::MultiSensorConfiguration, ...
@@ -61,13 +62,17 @@ void Client::initialize(const std::string& address, size_t command_port, size_t 
     // update sensor configuration (...)
     sensor.get();
 
-    // update network/connection parameters ...()
+    // update network/connection parameters
     connection.get();
 
     // set connection as master!
-    if (!server.command("MASTER", "NEW MASTER")) {
+    if (!connection.setMaster()) {
         throw std::runtime_error("Unable to set connection as master!");
     }
+
+    // reset data clients
+    EMG.reset();
+    AUX.reset();
 }
 
 

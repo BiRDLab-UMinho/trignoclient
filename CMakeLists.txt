@@ -111,13 +111,12 @@ target_sources(${PROJECT_NAME} PRIVATE
     src/recorder.cpp
     src/exporter.cpp
     src/logger.cpp
-    src/basic_protocol.cpp
+    src/basic_protocol.cpp  
     # data structures
     src/sample.cpp
     src/frame.cpp
     src/sequence.cpp
     src/io.cpp
-    src/test.cpp
 )
 
 # plotting-specific sources
@@ -149,9 +148,17 @@ endif()
 ########### trignoclient example executables
 
 if (WITH_EXAMPLES)
-    # network example
+    # network client example
     add_executable(example_client src/examples/example_client.cpp)
     target_link_libraries(example_client ${PROJECT_NAME})
+
+    # high-level trigno tool example
+    add_executable(example_tools src/examples/example_tools.cpp)
+    target_link_libraries(example_tools ${PROJECT_NAME})
+
+    # data structures and serialized input/output example
+    add_executable(example_io src/examples/example_io.cpp)
+    target_link_libraries(example_io ${PROJECT_NAME})
 
     # general purpose executable to send queries/commands from TCU
     add_executable(example_query src/examples/example_query.cpp)

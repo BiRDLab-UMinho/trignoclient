@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include "sensor.hpp"           // trigno::Sensor
+#include "duration.hpp"         // trigno::Duration
 #include "configuration.hpp"    // trigno::network::MultiSensorConfiguration, trigno::network::ConnectionConfiguration
 #include "frame.hpp"            // trigno::Frame
 #include "aux_data_client.hpp"
@@ -8,21 +9,21 @@
 namespace trigno::network {
 
 AUXDataClient::AUXDataClient(MultiSensorConfiguration* configuration) :
-    BasicDataClient(ConnectionConfiguration::AUX_DATA_CHANNELS_PER_SENSOR * sensor::ID::MAX, configuration) {
+    BasicDataClient(ConnectionConfiguration::AUX_DATA_CHANNELS_PER_SENSOR * (sensor::ID::MAX + 1), configuration) {
         /* ... */
 }
 
 
 
-AUXDataClient::AUXDataClient(MultiSensorConfiguration* configuration, const std::string& address, size_t emg_data_port, const AUXDataClient::Timeout& timeout) :
-    BasicDataClient(ConnectionConfiguration::AUX_DATA_CHANNELS_PER_SENSOR * sensor::ID::MAX, configuration, address, emg_data_port, timeout) {
+AUXDataClient::AUXDataClient(MultiSensorConfiguration* configuration, const std::string& address, size_t emg_data_port, const Duration& timeout) :
+    BasicDataClient(ConnectionConfiguration::AUX_DATA_CHANNELS_PER_SENSOR * (sensor::ID::MAX + 1), configuration, address, emg_data_port, timeout) {
         /* ... */
         // no need to connect, BasicDataClient establishes connection on constructor!
 }
 
 
 
-void AUXDataClient::connect(const std::string& address, size_t port, const AUXDataClient::Timeout& timeout) {
+void AUXDataClient::connect(const std::string& address, size_t port, const Duration& timeout) {
     // delegates to base implementation (but with different default arguments!)
     BasicDataClient::connect(address, port, timeout);
 }
@@ -40,7 +41,7 @@ void AUXDataClient::reset() {
             return;
         }
     }
-    throw std::runtime_error("[" + std::string(__func__) + "] No active AUX channels!");
+    // throw std::runtime_error("[" + std::string(__func__) + "] No active AUX channels!");
 }
 
 

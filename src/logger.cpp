@@ -20,7 +20,7 @@ void Logger::execute() {
     if (_message_format.size()) {
         std::unique_lock< std::mutex > lock(_mx);
         // print message & flush stdout
-        printf(_message_format.data(), remaining().count());
+        printf(_message_format.data(), remaining().count() / 1000.0);
         fflush(stdout);
         // sleep
         std::this_thread::sleep_for(_message_delay);

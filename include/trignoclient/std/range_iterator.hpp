@@ -18,6 +18,8 @@
 #include <exception>
 #include <iterator>
 #include <type_traits>
+#include <iostream>
+#include "cast_iterator.hpp"   // std::cast_iterator<>
 
 namespace std {
 
@@ -27,6 +29,9 @@ namespace std {
 ///
 /// @tparam     Container  Container type to iterator over.
 /// @tparam     T          Underlying element type. Defaults to Container::value_type.
+///
+/// @todo       Use cast_iterator< Container, T > as value iterator instead of iterator from underlying Container to force public T interface.
+///             At the moment, range-based loops (iterator dereferencing) & direct access return different types!
 ///
 template < typename Container, typename T = typename Container::value_type >
 class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
@@ -42,8 +47,10 @@ class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
     using reference            = typename std::iterator< std::random_access_iterator_tag, T >::reference;
     using const_reference      = const reference;
     using difference_type      = typename std::iterator< std::random_access_iterator_tag, T >::difference_type;
-    using value_iterator       = typename Container::iterator;
-    using value_const_iterator = typename Container::const_iterator;
+    // using value_iterator       = typename Container::iterator;
+    // using value_const_iterator = typename Container::const_iterator;
+    using value_iterator       = typename std::cast_iterator< Container, T >;
+    using value_const_iterator = typename std::cast_iterator< const Container, const T >;
 
     //--------------------------------------------------------------------------
     /// @brief      Static assertion on data types/template arguments.
@@ -122,7 +129,7 @@ class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
     ///
     /// @return     Reference to container value @ pos.
     ///
-    reference operator[](const typename Container::size_type pos);
+    T& operator[](const typename Container::size_type pos);
 
     //--------------------------------------------------------------------------
     /// @brief      Dereference operator.
@@ -178,16 +185,18 @@ class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
     operator value_const_iterator() const;
 
     //--------------------------------------------------------------------------
-    /// @brief      Conversion operator for a range of a different value type (same container type)
+    /// @brief      Conversion operator for a range of a different value type
     ///
-    template < typename oT, typename = typename enable_if< is_convertible< T, oT >::value >::type >
-    operator range_iterator< Container, oT >();
+    // template < typename oT, typename = typename enable_if< is_convertible< T, oT >::value >::type >
+    // operator range_iterator< Container, oT >();
 
     //--------------------------------------------------------------------------
-    /// @brief      Conversion operator for a range of a different value type (same container type)
+    /// @brief      Conversion operator for a range of a different container/value type.
     ///
-    template < typename oT, typename = typename enable_if< is_convertible< T, oT >::value >::type >
-    operator range_iterator< Container, oT >() const;
+    /// @note       Also captures conversions to *const* range iterators i.e. range_iterator< const Container, const T >
+    ///
+    template < typename oContainer, typename oT, typename = typename enable_if< is_convertible< T, oT >::value >::type >
+    operator range_iterator< oContainer, oT >() const;
 
     //--------------------------------------------------------------------------
     /// @brief      Equality operator.
@@ -277,7 +286,9 @@ range_iterator< Container, T >& range_iterator< Container, T >::operator++() {
 
 template < typename Container, typename T >
 range_iterator< Container, T > range_iterator< Container, T >::operator++(int) {
-    range_iterator< Container, T > retval = *this; ++(*this); return retval;
+    range_iterator< Container, T > retval = *this;
+    ++(*this);
+    return retval;
 }
 
 
@@ -294,7 +305,9 @@ range_iterator< Container, T >& range_iterator< Container, T >::operator--() {
 
 template < typename Container, typename T >
 range_iterator< Container, T > range_iterator< Container, T >::operator--(int) {
-    range_iterator< Container, T > retval = *this; --(*this); return retval;
+    range_iterator< Container, T > retval = *this;
+    --(*this);
+    return retval;
 }
 
 
@@ -335,15 +348,15 @@ typename range_iterator< Container, T >::reference range_iterator< Container, T 
 
 template < typename Container, typename T >
 const T& range_iterator< Container, T >::operator*() const {
-    return _container->template at< reference >(_pos);
+    return _container->at(_pos);
 }
 
 
 
 template < typename Container, typename T >
-typename range_iterator< Container, T >::reference range_iterator< Container, T >::operator[](const typename Container::size_type pos) {
+T& range_iterator< Container, T >::operator[](const typename Container::size_type pos) {
     if ((pos + _pos) < _container->size()) {
-        return (_container->template at< T >(_pos + pos));
+        return (_container->at(_pos + pos));
     }
     throw std::out_of_range("[" + std::string(__func__) + "] Invalid position!");
 }
@@ -353,7 +366,7 @@ typename range_iterator< Container, T >::reference range_iterator< Container, T 
 template < typename Container, typename T >
 const T& range_iterator< Container, T >::operator[](const typename Container::size_type pos) const {
     if ((pos + _pos) < _container->size()) {
-        return (_container->template at< T >(_pos + pos));
+        return (_container->at(_pos + pos));
     }
     throw std::out_of_range("[" + std::string(__func__) + "] Invalid position!");
 }
@@ -362,7 +375,7 @@ const T& range_iterator< Container, T >::operator[](const typename Container::si
 
 template < typename Container, typename T >
 typename range_iterator< Container, T >::value_iterator range_iterator< Container, T >::begin() {
-    return (_container->begin() + _pos);
+    return value_iterator(_container, _pos);
 }
 
 
@@ -370,17 +383,18 @@ typename range_iterator< Container, T >::value_iterator range_iterator< Containe
 template < typename Container, typename T >
 typename range_iterator< Container, T >::value_iterator range_iterator< Container, T >::end() {
     if (_pos + _width > _container->size()) {
-        return _container->end();
+        return value_iterator(_container, _container->size());
     }
-    return (_container->begin() + _pos + _width);
+    return value_iterator(_container, _pos + _width);
 }
 
 
 
 template < typename Container, typename T >
 typename range_iterator< Container, T >::value_const_iterator range_iterator< Container, T >::begin() const {
-    // @note       here, _countainer is not const (?), cbegin() needs to be called explicitely!
-    return (_container->cbegin() + _pos);
+    // @note       here, _container is not const (?), cbegin() needs to be called explicitely!
+    return value_const_iterator(_container, _pos);
+    // return (_container->cbegin() + _pos);
 }
 
 
@@ -389,9 +403,11 @@ template < typename Container, typename T >
 typename range_iterator< Container, T >::value_const_iterator range_iterator< Container, T >::end() const {
     // @note       here, _countainer is not const (?), cbegin() needs to be called explicitely!
     if (_pos + _width > _container->size()) {
-        return _container->cend();
+        return value_const_iterator(_container, _container->size());
+        // return _container->cend();
     }
-    return (_container->cbegin() + _pos + _width);
+    return value_const_iterator(_container, _pos + _width);
+    // return (_container->cbegin() + _pos + _width);
 }
 
 
@@ -424,20 +440,19 @@ range_iterator< Container, T >::operator range_iterator< Container, T >::value_c
 
 
 
-template < typename Container, typename T >
-template < typename oT, typename >
-range_iterator< Container, T >::operator range_iterator< Container, oT >() {
-    return range_iterator< Container, oT >(_container, _pos, _width,  _width - _step);
-}
+// template < typename Container, typename T >
+// template < typename oT, typename >
+// range_iterator< Container, T >::operator range_iterator< Container, oT >() {
+//     return range_iterator< Container, oT >(_container, _pos, _width,  _width - _step);
+// }
 
 
 
 template < typename Container, typename T >
-template < typename oT, typename >
-range_iterator< Container, T >::operator range_iterator< Container, oT >() const {
-    return range_iterator< Container, oT >(_container, _pos, _width,  _width - _step);
+template < typename oContainer, typename oT, typename >
+range_iterator< Container, T >::operator range_iterator< oContainer, oT >() const {
+    return range_iterator< oContainer, oT >(_container, _pos, _width,  _width - _step);
 }
-
 
 
 

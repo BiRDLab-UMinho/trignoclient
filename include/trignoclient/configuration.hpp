@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "sensor.hpp"
+#include <future>
+#include "sensor.hpp"              // trigno::sensor::ID
+#include "duration.hpp"            // trigno::Duration
 #include "basic_configurator.hpp"  // trigno::network::BasicConfigurator
 #include "std/indexer.hpp"         // std::index<>
 
@@ -442,26 +444,74 @@ class SystemControl : public BasicConfigurator {
     ///
     void reset() override;
 
+    //--------------------------------------------------------------------------
+    /// @brief      Get configuration from Trigno Server.
+    ///
+    /// @return     True if parameters were successfully received and parsed, false otherwise.
+    ///
     bool get() override;
 
+    //--------------------------------------------------------------------------
+    /// @brief      Set hardware configuration into Trigno Server.
+    ///
+    /// @return     True if parameters were successfully received and parsed, false otherwise.
+    ///
     bool set() override;
 
+    //--------------------------------------------------------------------------
+    /// @brief      Custom conversion operator to text string.
+    ///
+    /// @note       Useful to collapse all configuration into a single string that can be sent to the SDK server for bulk processing.
+    ///             Can also be used to get visual feedback of configuration content.
+    ///
     operator std::string() const override;
 
+    //--------------------------------------------------------------------------
+    /// @brief      Checks if system is running/streaming.
+    ///
+    /// @return     True if running, False otherwise.
+    ///
     bool isRunning() const;
 
+    //--------------------------------------------------------------------------
+    /// @brief      Access trigger configuration.
+    ///
+    /// @return     *const* reference to member Trigger instance.
+    ///
     const Trigger& trigger() const;
 
-    bool start(float delay = 0.0);
+    //--------------------------------------------------------------------------
+    /// @brief      Send start command / starts data streaming for *time* ms.
+    ///
+    /// @param[in]  time  Duration of recording/streaming, in milliseconds. If 0, continues indefinitely (no stop command scheduled).
+    ///
+    /// @return     Future object of bool type w/ success of . If valid duration (> 0 ms), waitable until stop command is sent. Invalid/no shared state otherwise.
+    ///
+    /// @note       Currently Trigno SDK does not return any response regarding success/failure of start command.
+    ///             This makes waiting for data on data port the only way to verify if successfully start, which can't/should'nt be done on SystemControl.
+    ///
+    std::future< bool > start(const Duration& time = Duration(0));
 
-    bool stop(float delay = 0.0);
+    //--------------------------------------------------------------------------
+    /// @brief      Send stop command / stops data streaming after *delay* ms.
+    ///
+    /// @return     True if stop command was sucessfully sent, false otherwise.
+    ///
+    /// @note       Currently Trigno SDK does not return any response regarding success/failure of stop command.
+    ///             This makes waiting for data on data port the only way to verify if successfully start, which can't/should'nt be done on SystemControl.
+    ///
+    bool stop();
 
+    //--------------------------------------------------------------------------
+    /// @brief      Send exit command to TCU for remote shutdown of the Trigno server.
+    ///
+    /// @return     True if sucessfully quit, false otherwise.
+    ///
     bool quit();
-
 
  protected:
     //--------------------------------------------------------------------------
-    /// @brief      Sensor firmware version (as text)
+    /// @brief      Running/streaming flag.
     ///
     bool _running;
 
@@ -534,7 +584,7 @@ class ConnectionConfiguration : public BasicConfigurator {
     ///
     /// @todo       Declare as dynamic parameter?
     ///
-    static constexpr int IO_TIMEOUT = 10 /* milliseconds */;
+    static constexpr int IO_TIMEOUT = 100 /* milliseconds */;
 
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new instance.
@@ -710,6 +760,8 @@ class ConnectionConfiguration : public BasicConfigurator {
 ///
 /// @return     Modified data stream.
 ///
+/// @todo       Move to 'io.hpp/io.cpp'
+///
 std::ostream& operator<<(std::ostream& ostream, const trigno::network::SensorConfiguration& sensor_configuration);
 
 
@@ -721,6 +773,8 @@ std::ostream& operator<<(std::ostream& ostream, const trigno::network::SensorCon
 /// @param[in]  emg_frame  Base information instance.
 ///
 /// @return     Modified data stream.
+///
+/// @todo       Move to 'io.hpp/io.cpp'
 ///
 std::ostream& operator<<(std::ostream& ostream, const trigno::network::BaseInformation& base_information);
 
@@ -734,6 +788,8 @@ std::ostream& operator<<(std::ostream& ostream, const trigno::network::BaseInfor
 ///
 /// @return     Modified data stream.
 ///
+/// @todo       Move to 'io.hpp/io.cpp'
+///
 std::ostream& operator<<(std::ostream& ostream, const trigno::network::SystemControl& system_control);
 
 
@@ -745,6 +801,8 @@ std::ostream& operator<<(std::ostream& ostream, const trigno::network::SystemCon
 /// @param[in]  emg_frame  Connection configuration instance.
 ///
 /// @return     Modified data stream.
+///
+/// @todo       Move to 'io.hpp/io.cpp'
 ///
 std::ostream& operator<<(std::ostream& ostream, const trigno::network::ConnectionConfiguration& connection_configuration);
 

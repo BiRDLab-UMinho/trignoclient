@@ -17,6 +17,7 @@
 #include <memory>
 #include <iostream>
 #include <utility>
+#include <type_traits>
 
 namespace std {
 
@@ -68,19 +69,13 @@ class tagged {
     ///
     /// @note       Redirects all input arguments to T constructor.
     ///
-    // template < typename... Args, typename = typename enable_if< is_constructible< T, Args... >::value >::type >
-    // tagged(const Args&... args);
-
     template < typename... Args, typename = typename enable_if< is_constructible< T, Args... >::value >::type >
     tagged(Args&&... args);
 
-
-    // tagged(const tagged< T, Key >& other) { printf("tagged copy constructor! \n");}
-    // tagged(tagged< T, Key >&& other) { printf("tagged move constructor! \n");}
-
-
-    // tagged& operator=(const tagged< T, Key >& other) { printf("tagged copy assignment! \n");}
-    // tagged& operator=(tagged< T, Key >&& other) { printf("tagged move assignment! \n");}
+    // tagged(tagged< T, Key >& other);  
+    tagged(const tagged< T, Key >& other);  
+    tagged(tagged< T, Key >&& other);   
+    tagged(tagged< T, Key >& other) = default;   
 
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new instance.
@@ -97,10 +92,6 @@ class tagged {
     /// @note       This overload is shadowed by tagged< Args... >(Args... args) if defined i.e. an instance of T can be constructed with (key_, args...).
     ///             In that case the non-member constructor make_tagged<> should be used.
     ///
-    // template < typename... Args, typename = typename enable_if< is_constructible< T, Args... >::value >::type >
-    // tagged(const key_type& key_, const Args&... args);
-
-
     template < typename... Args, typename = typename enable_if< is_constructible< T, Args... >::value >::type >
     tagged(const key_type& key_, Args&&... args);
 
@@ -116,7 +107,12 @@ class tagged {
     /// @note       This overload is shadowed by previous constructor templates if *T* is constructible with (const T&, const key_type&) arguments.
     ///             Otherwise it ensures that std::tagged< T, key_type > can be constructed with tagged(T&, key&) and tagged(key&, T&)
     ///
+    /// @todo       Remove this constructor overload, there is no need for it.
+    ///
     tagged(const T& value_, const key_type& key_);
+
+    tagged& operator=(const tagged< T, Key >& other);
+    tagged& operator=(tagged< T, Key >&& other);
 
     //----------------------------------------------------------------------
     /// @brief      Assignment operator, assiging argument to value member.
@@ -131,9 +127,6 @@ class tagged {
     ///
     template < typename iT >
     tagged< T, Key >& operator=(const iT& other);
-
-    // template < typename iT >
-    // tagged< T, Key >& operator=(iT&& other) { printf("tagged value move assignment!"); }
 
     //--------------------------------------------------------------------------
     /// @brief      Function call operator.
@@ -208,8 +201,9 @@ class tagged {
 template < typename T, typename Key >
 template < typename... Args, typename >
 tagged< T, Key >::tagged(Args&&... args) :
-    _value(new T(std::forward<Args>(args)...)) /* @note std::forward presevers lvalue/rvalue references! */ {
-    /* ... */
+    _value(new T(std::forward<Args>(args)...)) /* @note std::forward preseves lvalue/rvalue references! */ {
+        /* ... */
+        // printf("Variadic forward construtor @ %p\n", _value);
 }
 
 
@@ -218,15 +212,53 @@ template < typename T, typename Key >
 template < typename... Args, typename >
 tagged< T, Key >::tagged(const Key& key_, Args&&... args) :
     key(key_),
-    _value(new T(std::forward<Args>(args)...)) /* @note std::forward presevers lvalue/rvalue references! */ {
+    _value(new T(std::forward<Args>(args)...)) /* @note std::forward preseves lvalue/rvalue references! */ {
+        /* ... */
+        // printf("Variadic forward construtor w/ key @ %p\n", _value);
+}
+
+
+
+template < typename T, typename Key >
+tagged< T, Key >::tagged(const tagged< T, Key >& other) :
+    key(other.key),
+    _value(new T(other.get())) {
+        /* ... */
+        // printf("Custom copy construtor @ %p\n", _value);
+}
+
+
+
+template < typename T, typename Key >
+tagged< T, Key >::tagged(tagged< T, Key >&& other) :
+    key(other.key),
+    _value(new T(std::move(other.get()))) {
+        /* ... */
+        // printf("Custom move construtor @ %p\n", _value);
+}
+
+
+template < typename T, typename Key >
+tagged< T, Key >::tagged(const T& value_, const Key& key_) : _value(new T(value_)), key(key_) {
     /* ... */
 }
 
 
 
 template < typename T, typename Key >
-tagged< T, Key >::tagged(const T& value_, const Key& key_) : _value(new T(value_)), key(key_) {
-    /* ... */
+tagged< T, Key >& tagged< T, Key >::operator=(const tagged< T, Key >& other) {
+    key = other.key;
+    _value = std::shared_ptr< T >(new T(other.get()));
+    return *this;
+}
+
+
+
+template < typename T, typename Key >
+tagged< T, Key >& tagged< T, Key >::operator=(tagged< T, Key >&& other) {
+    key = other.key;
+    _value = std::shared_ptr< T >(new T(std::move(other.get())));
+    return *this;
 }
 
 
@@ -306,26 +338,5 @@ tagged< T, Key > make_tagged(const typename tagged< T, Key >::key_type& key, Arg
 
 
 }  // namespace std
-
-
-
-//------------------------------------------------------------------------------
-/// @brief      Left shift operator overload.
-///
-/// @param      os      Output stream
-/// @param[in]  tagged  Tagged object/instance of std::tagged
-///
-/// @tparam     T       Type of tagged value. Must be shiftable i.e. provide a operator<<() overload.
-/// @tparam     Key     Type of key/identifier
-///
-/// @return     Modified output stream.
-///
-/// @note       Redirects output to left shift operator with *T* argument.
-///
-template < typename T, typename Key >
-std::ostream& operator<<(std::ostream& os, std::tagged< T, Key > tagged) {
-    os << *tagged.value;
-    return os;
-}
 
 #endif  // TRIGNOCLIENT_INCLUDE_TRIGNOCLIENT_TAGGED_HPP_

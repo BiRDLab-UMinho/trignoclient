@@ -42,14 +42,6 @@ class BasicDataClient {
     /// @brief      Convenience buffer alias(es).
     ///
     using Buffer = std::tcp_client::dynamic_buffer;
-    // using Buffer = std::tcp_client::static_buffer< sizeof(std::declval< Value >()) /* == 4 bytes */ >;
-
-    //--------------------------------------------------------------------------
-    /// @brief      Timeout/duration type. Specialization of std::chrono::seconds<> for float values.
-    ///
-    /// @note       Compatible std::chrono literals (cf. https://en.cppreference.com/w/cpp/chrono/operator%22%22s).
-    ///
-    using Timeout = std::chrono::milliseconds;
 
     //--------------------------------------------------------------------------
     /// @brief      Constructs a new (idle) instance.
@@ -160,6 +152,22 @@ class BasicDataClient {
     /// @param[out] sequence    Output data frame sequence. A new frame is added to the back of the queue.
     ///
     virtual void operator>>(Sequence& sequence);
+
+    //--------------------------------------------------------------------------
+    /// @brief      Convenience wrapper around read() to test data port.
+    ///             Performs a dummy read from data port until *any* data is received;
+    ///
+    /// @param[in]  timeout     Wait timeout (defaults to 10 seconds).
+    ///
+    /// @return     True if data was received (client is ready), false if timed out before any data was read.
+    ///
+    /// @note       Useful to check if Trigno server has started streaming to data port.
+    ///
+    /// @note       Received data is not parsed but kept in internal buffer, which limits any further parsing
+    ///             (if first received frames are relevant) to derived types.
+    ///             In most situations, discarding initial data is acceptable, as they often are null/filled with garbage data.
+    ///
+    virtual bool waitForData(const Duration& timeout = Duration(10000)) noexcept;
 
  protected:
     //--------------------------------------------------------------------------

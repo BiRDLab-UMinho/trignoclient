@@ -147,8 +147,19 @@ class Interface {
     bool waitFor(const std::string& target, const Duration& timeout = Duration(ConnectionConfiguration::IO_TIMEOUT), size_t max_attempts = 1000);
 
     //--------------------------------------------------------------------------
-    /// @brief      Schedule (member) function call after given *delay*.
-    ///             
+    /// @brief      Asynchronously schedule a query to server after *delay* milliseconds.
+    ///
+    /// @param[in]  delay    Time delay to wait before sending query.
+    /// @param[in]  query    Query to send.
+    /// @param[in]  timeout  I/O Timeout (maximum wait time before aborting).
+    ///
+    /// @return     Future object of std::string type, holding server response/return.
+    ///
+    std::future< std::string > schedule(const Duration& delay, const std::string& query, const Duration& timeout = Duration(ConnectionConfiguration::IO_TIMEOUT));
+
+    //--------------------------------------------------------------------------
+    /// @brief      Generic schedule (member) function call after given *delay*.
+    ///
     /// @param[in]  delay  Delay with which to call given *func*.
     /// @param[in]  func   Member function to call
     /// @param[in]  args   Arguments to given *func*
@@ -159,7 +170,7 @@ class Interface {
     /// @return     std::future< T > instance holding result of function call.
     ///
     template < typename T, typename... Args >
-    std::future< T > schedule(const Duration& delay, const std::function< T(Interface, Args...) >& func, Args&&... args);
+    std::future< T > schedule(const Duration& delay, std::function< T(const Args&...) > func, Args&&... args);
 
  protected:
     //--------------------------------------------------------------------------
@@ -181,12 +192,11 @@ class Interface {
 
 
 template < typename T, typename... Args >
-std::future< T > Interface::schedule(const Duration& delay, const std::function< T(Interface, Args...) >& func, Args&&... args) {
+std::future< T > Interface::schedule(const Duration& delay, std::function< T(const Args&...) > func, Args&&... args) {
     std::future< T > ret =  std::async(std::launch::async, [delay, this, func, args... ] {
         std::this_thread::sleep_for(delay);
-        func(std::forward< Args >(args)...);
+        func(std::forward< const Args& >(args)...);
     });
-    // , func, std::forward< Args >(args)...);
     return ret;
 }
 
