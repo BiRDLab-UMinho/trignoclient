@@ -317,6 +317,8 @@ class sorted_indexer : public indexer< Container, T, Locked > {
 
 
 
+//--------------------------------------------------------------------------
+/// @cond
 
 template < typename Container, typename T, bool Locked >
 template < typename... Args >
@@ -371,8 +373,8 @@ sorted_indexer< Container, T, Locked >::element_range< oT > sorted_indexer< Cont
     static_assert(is_convertible< value_type, oT >(),
                   "[value_type] MUST BE CONVERTIBLE TO OUTPUT TYPE [oT]");
     //
-    auto n = width > this->size() ? this->size() : width;
-    return element_range< oT >(&_data, 0, n, overlap);
+    // auto n = width > this->size() ? this->size() : width;
+    return element_range< oT >(&_data, 0, width, overlap);
 }
 
 
@@ -384,8 +386,8 @@ sorted_indexer< Container, T, Locked >::const_element_range< oT > sorted_indexer
     static_assert(is_convertible< value_type, oT >(),
                   "[value_type] MUST BE CONVERTIBLE TO OUTPUT TYPE [oT]");
     //
-    auto n = width > this->size() ? this->size() : width;
-    return const_element_range< oT >(&_data, 0, n, overlap);
+    // auto n = width > this->size() ? this->size() : width;
+    return const_element_range< oT >(&_data, 0, width, overlap);
 }
 
 
@@ -398,7 +400,7 @@ sorted_indexer< Container, T, Locked >::element_range< oT > sorted_indexer< Cont
                   "[value_type] MUST BE CONVERTIBLE TO OUTPUT TYPE [oT]");
     //
     auto n = width > this->size() ? 0 : (this->size() - width);
-    return element_range< oT >(&_data, this->size() - n, n, overlap);
+    return element_range< oT >(&_data, this->size() - n, width, overlap);
 }
 
 
@@ -411,7 +413,7 @@ sorted_indexer< Container, T, Locked >::const_element_range< oT > sorted_indexer
                   "[value_type] MUST BE CONVERTIBLE TO OUTPUT TYPE [oT]");
     //
     auto n = width > this->size() ? 0 : (this->size() - width);
-    return const_element_range< oT >(&_data, this->size() - n, n, overlap);
+    return const_element_range< oT >(&_data, this->size() - n, width, overlap);
 }
 
 
@@ -498,7 +500,7 @@ sorted_indexer< Container, T, Locked >::const_element_range< typename sorted_ind
     return const_element_range< value_type>(&_data, pos_begin, pos_end - pos_begin, overlap);
 }
 
-
+/// @endcond
 
 
 //------------------------------------------------------------------------------

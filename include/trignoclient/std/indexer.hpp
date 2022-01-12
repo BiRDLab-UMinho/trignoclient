@@ -831,7 +831,9 @@ class indexer {
 };
 
 
-/// @cond DEFINITIONS
+
+//--------------------------------------------------------------------------
+/// @cond
 
 template < typename Container, typename T, bool Locked >
 template < typename... Args, typename >
@@ -1380,6 +1382,7 @@ void indexer< Container, T, Locked >::pop_back() {
 }
 
 /// @endcond
+
 
 //------------------------------------------------------------------------------
 /// @brief      Utility constructor that allows inline initialization of an indexer object and its key set.

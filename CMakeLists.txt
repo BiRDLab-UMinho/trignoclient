@@ -21,7 +21,6 @@ set(${PROJECT_NAME}_VERSION 0.9)
 set(ConfigPackageLocation ${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/cmake)
 
 # Doxygen descriptors (requires matching Doxyfile.in)
-# set(CMAKE_PROJECT_VERSION "Delsys® Trigno Client Library")  # for CMake<3.12
 # set(CMAKE_PROJECT_DESCRIPTION "Delsys® Trigno Client Library")  # for CMake<3.9
 set(CMAKE_PROJECT_LOGO doc/logo-delsys.png)
 set(CMAKE_PROJECT_BRIEF "C++ library with tools for managing a Trigno® Research+ System, as well as acquiring & processing acquired data.")
@@ -40,7 +39,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 ## option (interactive) to enable/disable doc generation
-option(BUILD_DOC     "Generate documentation (doxygen)" OFF)
+option(BUILD_DOC "Generate documentation (doxygen)" OFF)
 
 ## option (interactive) to enable/disable doc generation
 option(BUILD_SHARED_LIBS "Wether generated libraries are shared (default) or static" ON)
@@ -95,34 +94,36 @@ endif()
 ########### trignoclient library
 
 # client library
-add_library(${PROJECT_NAME} src/client.cpp)
+# a single source is added to avoid issues in add_library() wi  th empty source list
+add_library(${PROJECT_NAME} src/core/io.cpp)
 
 # explicit declaration of target sources (redundant, for catkin to compile & install)
 target_sources(${PROJECT_NAME} PRIVATE    
-    # network
-    src/client.cpp
-    src/interface.cpp
-    src/configuration.cpp
-    src/basic_configurator.cpp
-    src/basic_data_client.cpp
-    src/emg_data_client.cpp
-    src/aux_data_client.cpp
-    # tools
-    src/recorder.cpp
-    src/exporter.cpp
-    src/logger.cpp
-    src/basic_protocol.cpp  
-    # data structures
-    src/sample.cpp
-    src/frame.cpp
-    src/sequence.cpp
-    src/io.cpp
+    # # network
+    src/network/client.cpp
+    src/network/interface.cpp
+    src/network/configuration.cpp
+    src/network/basic_configurator.cpp
+    src/network/basic_data_client.cpp
+    src/network/emg_data_client.cpp
+    src/network/aux_data_client.cpp
+    # # tools
+    src/tools/recorder.cpp
+    src/tools/exporter.cpp
+    src/tools/logger.cpp
+    src/tools/sequence_metrics.cpp
+    src/tools/basic_protocol.cpp  
+    # # core
+    src/core/sample.cpp
+    src/core/frame.cpp
+    src/core/sequence.cpp
+    src/core/io.cpp
 )
 
 # plotting-specific sources
 if (${WITH_PLOTTING})
-    target_sources(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src/plotter.cpp)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC -DWITH_PLOTTING)
+    target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/tools/plotter.cpp)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DWITH_PLOTTING)
 endif()
 
 # target header locations
@@ -132,8 +133,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURR
 
 # plotting headers & sources
 if (${WITH_PLOTTING})
-    target_include_directories(${PROJECT_NAME} etc/cv-plot/CvPlot/inc
-                                               ${OpenCV_INCLUDE_DIRS})
+    target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/etc/cv-plot/CvPlot/inc>
+                                                      $<BUILD_INTERFACE:${OpenCV_INCLUDE_DIRS}>)
 endif()
 
 # link to external libraries / dependencies
@@ -142,27 +143,31 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES}
 
 # plotting-specific library dependency
 if (${WITH_PLOTTING})
-    target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenCV_LIBRARIES})
 endif()
 
 ########### trignoclient example executables
 
 if (WITH_EXAMPLES)
     # network client example
-    add_executable(example_client src/examples/example_client.cpp)
+    add_executable(example_client examples/example_client.cpp)
     target_link_libraries(example_client ${PROJECT_NAME})
 
-    # high-level trigno tool example
-    add_executable(example_tools src/examples/example_tools.cpp)
-    target_link_libraries(example_tools ${PROJECT_NAME})
-
     # data structures and serialized input/output example
-    add_executable(example_io src/examples/example_io.cpp)
+    add_executable(example_io examples/example_io.cpp)
     target_link_libraries(example_io ${PROJECT_NAME})
 
     # general purpose executable to send queries/commands from TCU
-    add_executable(example_query src/examples/example_query.cpp)
-    target_link_libraries(example_query ${PROJECT_NAME})
+    add_executable(query_server examples/query_server.cpp)
+    target_link_libraries(query_server ${PROJECT_NAME})
+
+    # general purpose executable to send queries/commands from TCU
+    add_executable(plot_sequence examples/plot_sequence.cpp)
+    target_link_libraries(plot_sequence ${PROJECT_NAME})
+
+    # high-level trigno tool example
+    add_executable(custom_protocol examples/custom_protocol.cpp)
+    target_link_libraries(custom_protocol ${PROJECT_NAME})
 endif()
 
 ########### trignoclient API documentation
@@ -196,7 +201,6 @@ endif()
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/trignoclient"
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING PATTERN "*.hpp")
-
 
 #libraries
 install(TARGETS ${PROJECT_NAME}
@@ -249,6 +253,4 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
   DESTINATION ${ConfigPackageLocation})
-
-
 

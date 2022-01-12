@@ -111,11 +111,26 @@ class tagged {
     ///
     tagged(const T& value_, const key_type& key_);
 
+    //--------------------------------------------------------------------------
+    /// @brief      Assignment operator, *copying* from another tagged instance.
+    ///
+    /// @param[in]  other  Input instance.
+    ///
+    /// @return     Reference to modified instance.
+    ///
     tagged& operator=(const tagged< T, Key >& other);
+    
+    //--------------------------------------------------------------------------
+    /// @brief      Assignment operator, *moving* from another tagged instance.
+    ///
+    /// @param[in]  other  Input instance, consumed after operation.
+    ///
+    /// @return     Reference to modified instance.
+    ///
     tagged& operator=(tagged< T, Key >&& other);
 
     //----------------------------------------------------------------------
-    /// @brief      Assignment operator, assiging argument to value member.
+    /// @brief      Assignment operator, assiging argument directly to value member.
     ///
     /// @note       Allows modifying value directly from an element instance.
     ///

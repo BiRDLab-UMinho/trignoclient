@@ -27,8 +27,34 @@
 #include <future>
 #include <utility>
 #include <boost/asio.hpp>
+#include <tuple>
+
+#define LEGACY_ASYNC_IMPLEMENTATION
+
+#ifndef LEGACY_ASYNC_IMPLEMENTATION
+#endif  // LEGACY_ASYNC_IMPLEMENTATION
+
 
 namespace std {
+
+//------------------------------------------------------------------------------
+/// @brief      Static type check over variadic parameter pack, testing if there is any value (!= reference) type in pack.
+///
+/// @tparam     Args  Variadic template parameter pack to check.
+///
+template < typename... Args >
+struct contains_value_type : std::false_type { /* ... */ };
+
+template < typename T, typename... Args >
+struct contains_value_type< T, Args... > :
+    std::conditional<
+        !std::is_reference< T >() && !std::is_void< T >(),  // condition to test
+        std::true_type,                                     // if condition is true -> if T is a value-type
+        contains_value_type< Args... >                      // if contition is false -> recusively call w/ remaining arguments in pack
+    >::type {
+    /* ... */
+};
+
 
 //------------------------------------------------------------------------------
 /// @brief      Simple extensible base class for looped/unlooped multi-threaded operations.
@@ -37,24 +63,30 @@ namespace std {
 /// @note       Execution is looped as:
 ///             \code
 ///             start();
-///             while (active()) {
-///                 execute();
-///                 if (kill) return;
-///             }
+///             do {
+///                 execute(args...);
+///             } while (active());
 ///             stop();
 ///             \endcode
-///             Therefore, derived implementations *must* override execute() method (and optionally start() and stop()) as well as active() with execution condition.
-///             Default base implementations are provided for start(), stop() and active() so that execute() is called once (single-time operations).
+///             Therefore, derived implementations *must* override execute() method, and optionally *can* start(), stop()) and active().
+///             Default base implementations are provided for start(), stop() and active() so that execute() is called only once i.e. single-time operation.
 ///
+template < typename... Args >
 class basic_executor {
  public:
     //--------------------------------------------------------------------------
+    /// @brief      Static assertion on data types/template arguments. At this stage only references (lvalue or rvalue) are supported as template arguments.
+    ///
+    // static_assert(!contains_value_type< Args... >(),
+    //               "RUNTIME ARGUMENT TYPES MUST BE REFERENCE-ONLY!");
+
+    //--------------------------------------------------------------------------
     /// @brief      Constructs a new instance.
     ///
-    /// @param[in]  continuous  Boolean flag for continuous operations.
-    ///                         Defaults to false, wherein operation is killed after first run.
+    /// @param[in]  loop  Boolean flag for continuous operations.
+    ///                   Defaults to false, wherein operation is killed after first run.
     ///
-    explicit basic_executor(bool continuous = false);
+    explicit basic_executor(bool loop = false);
 
     //--------------------------------------------------------------------------
     /// @brief      Destroys the object.
@@ -62,16 +94,16 @@ class basic_executor {
     virtual ~basic_executor();
 
     //--------------------------------------------------------------------------
-    /// @brief      Run operation. Calls specialized/derived implementation of execute().
+    /// @brief      Run operation synchronously. Calls specialized/derived implementation of execute().
     ///
-    virtual void run();
+    virtual void run(Args... args);
 
     //--------------------------------------------------------------------------
     /// @brief      Launches an operation asynchronously (in the background), not blocking/waiting for its completion.
     ///
     /// @note       Operation keeps executing independent of main thread, even if it exits/finishes @ different times.
     ///
-    virtual void launch();
+    virtual void launch(Args... args);
 
     //--------------------------------------------------------------------------
     /// @brief      Waits for execution to finish.
@@ -111,16 +143,15 @@ class basic_executor {
     /// @brief      Executes operation. Default implementation calls execute() in a loop while active() returns true i.e.
     ///             \code
     ///             start()
-    ///             while (active()) {
-    ///                 execute();
-    ///                 if (kill) return;
-    ///             }
+    ///             do {
+    ///                 execute(args...);
+    ///             } while (active());
     ///             stop()
     ///             \endcode
     ///
     /// @note       Pure virtual, derived types must provide their own implementation.
     ///
-    virtual void execute() = 0;
+    virtual void execute(Args... args) = 0;
 
     //--------------------------------------------------------------------------
     /// @brief      Future object holding execution status.
@@ -135,37 +166,60 @@ class basic_executor {
 
 
 
-inline basic_executor::basic_executor(bool loop) : _kill(!loop) /* single loop unless derived types override active() */ {
+//--------------------------------------------------------------------------
+/// @cond
+template < typename... Args >
+inline basic_executor< Args... >::basic_executor(bool loop) : _kill(!loop) /* single loop unless derived types override active() */ {
     /* ... */
 }
 
 
 
-inline basic_executor::~basic_executor() {
+template < typename... Args >
+inline basic_executor< Args... >::~basic_executor() {
     /* ... */
 }
 
 
 
-inline void basic_executor::run() {
+template < typename... Args >
+inline void basic_executor< Args... >::run(Args... args) {
     start();
-    while (active()) {
-        execute();
-        if (_kill) return;
-    }
+    do {
+        execute(std::forward< Args >(args)...);
+    } while (active());
     stop();
 }
 
 
 
-inline void basic_executor::launch() {
-    // call run() asynchronously on a separate thread
-    _done = std::async(std::launch::async, [this] { run(); });
+template < typename... Args >
+inline void basic_executor< Args... >::launch(Args... args) {
+    #ifdef LEGACY_ASYNC_IMPLEMENTATION
+    // C++14-compatible implementation
+    // only for passed-by-reference arguments - doesn't work with passed-by-value arguments
+    // as capturing by reference would lead to dangling references as pased-by-value arguments are local
+    // additionally, capturing by value is not efficient (reference arguments would be copied into lambda),
+    _done = std::async(std::launch::async, [this, &args... ] {
+        this->run(std::forward<Args>(args)...);
+    });
+    #else
+    // C++17 onward implementation (needs further testing, low priority)
+    // works with passed-by-value and passed-by-reference arguments
+    // copy arguments into a tuple, capture the tuple by value, use std::apply() to call function from lambda
+    // cf. https://stackoverflow.com/questions/70645885/how-to-properly-generically-forward-a-parameter-pack-into-a-lambda/70646403?noredirect=1#comment124887266_70646403
+    // @note: may require signatures to be changed to '(Args...)' and '#include <tuple>'
+    std::tuple< basic_executor*, Args... > t { this, args... };
+    _done = std::async(std::launch::async, [ t  ] {
+        std::apply(&basic_executor::run, t);  // @note: C++17 onwards!
+    });
+    #endif
 }
 
 
 
-inline void basic_executor::wait() const {
+template < typename... Args >
+inline void basic_executor< Args... >::wait() const {
     if (_done.valid()) {
         _done.wait();
     }
@@ -173,30 +227,37 @@ inline void basic_executor::wait() const {
 
 
 
-inline bool basic_executor::active() const {
+template < typename... Args >
+inline bool basic_executor< Args... >::active() const {
     /* ... */
     // base implementation disables loop i.e. execute() is run only once
-    return true;
+    return (!_kill);
 }
 
 
 
-inline void basic_executor::start() {
+template < typename... Args >
+inline void basic_executor< Args... >::start() {
     /* ... */
 }
 
 
 
-inline void basic_executor::stop() {
+template < typename... Args >
+inline void basic_executor< Args... >::stop() {
     /* ... */
 }
 
 
-inline void basic_executor::kill() {
+
+template < typename... Args >
+inline void basic_executor< Args... >::kill() {
     /* ... */
     _kill = true;
     // wait();  // dangerous to wait for loop to exit. if e.g. kill() is called within execute(), it gets stuck in a loop!
 }
+
+/// @endcond
 
 
 //------------------------------------------------------------------------------
@@ -206,13 +267,9 @@ inline void basic_executor::kill() {
 ///
 /// @note       The purpose is to provide a base type for different similar operations that allows easy management.
 ///
-class basic_timed_executor : public basic_executor {
+template < typename... Args >
+class basic_timed_executor : public basic_executor< const chrono::milliseconds&, Args... > {
  public:
-    //--------------------------------------------------------------------------
-    /// @brief      Duration type. Can be used for higher verbosity when parsing time arguments (i.e. duration(1.5)).
-    ///
-    // using duration = std::chrono::duration< float, std::ratio< 1 > >;
-
     //--------------------------------------------------------------------------
     /// @brief      Timer type. Using boost::asio timers allows for greater felxiblity than std::chrono clocks (a timer class would need to be implemeted)
     ///
@@ -222,22 +279,6 @@ class basic_timed_executor : public basic_executor {
     /// @brief      Constructs a new instance.
     ///
     basic_timed_executor();
-
-    //--------------------------------------------------------------------------
-    /// @brief      Run timed operation. Calls specialized/derived implementation of start(), execute() and stop().
-    ///
-    /// @param[in]  duration  Duration to run operation for (in seconds).
-    ///
-    void run(const chrono::milliseconds& time = chrono::milliseconds::max());
-
-    //--------------------------------------------------------------------------
-    /// @brief      Launches a timed operation asynchronously (in the background), not blocking/waiting for its completion.
-    ///
-    /// @param[in]  duration  Duration to run operation for (in seconds).
-    ///
-    /// @note       Operation keeps executing independent of main thread, even if it exits/finishes @ different times.
-    ///
-    void launch(const chrono::milliseconds& time = chrono::milliseconds::max());
 
     //--------------------------------------------------------------------------
     /// @brief      Waits for execution to finish.
@@ -261,16 +302,35 @@ class basic_timed_executor : public basic_executor {
     template < typename DurationType = chrono::milliseconds >
     DurationType remaining() const noexcept;
 
+    //--------------------------------------------------------------------------
+    /// @brief      Run operation. Calls specialized/derived implementation of execute().
+    ///
+    void run(const chrono::milliseconds& time, Args... args) override;
+
  protected:
     //--------------------------------------------------------------------------
-    /// @brief      Explicit declaration of run() in order to remove from public interface.
+    /// @brief      Executes operation. Default implementation calls execute() in a loop while active() returns true i.e.
+    ///             \code
+    ///             start()
+    ///             do {
+    ///                 execute(args...);
+    ///             } while (active());
+    ///             stop()
+    ///             \endcode
     ///
-    using basic_executor::run;
+    /// @note       Pure virtual, derived types must provide their own implementation.
+    ///
+    virtual void execute(Args... args) = 0;
 
     //--------------------------------------------------------------------------
-    /// @brief      Explicit declaration of launcher() in order to remove from public interface.
+    /// @brief      Explicit declaration of start() in order to remove from public interface.
     ///
-    using basic_executor::launch;
+    using basic_executor< const chrono::milliseconds&, Args... >::start;
+
+    //--------------------------------------------------------------------------
+    /// @brief      Explicit declaration of stop() in order to remove from public interface.
+    ///
+    using basic_executor< const chrono::milliseconds&, Args... >::stop;
 
     //--------------------------------------------------------------------------
     /// @brief      Resets timer to *time* & starts counting.
@@ -291,49 +351,73 @@ class basic_timed_executor : public basic_executor {
     /// @brief      Timer object.
     ///
     timer _timer;
+
+ private:
+    //--------------------------------------------------------------------------
+    /// @brief      Dummy/placeholder overrride to disable inherited pure virtual execute(const milliseconds&, Args...).
+    ///             Under the assumption that execute() does not need access to the run/launch duration, it is replaced by execute(Args...)
+    ///
+    /// @note       Declared private and final, i.e. derived executors will be unware of it.
+    ///
+    void execute(const chrono::milliseconds& time, Args... args) final;
 };
 
 
 
-inline basic_timed_executor::basic_timed_executor() :
-    basic_executor(true),
+//--------------------------------------------------------------------------
+/// @cond
+
+template < typename... Args >
+inline basic_timed_executor< Args... >::basic_timed_executor() :
+    basic_executor< const chrono::milliseconds&, Args... >(true),
     _timer(_io) {
         /* ... */
 }
 
 
 
-inline void basic_timed_executor::run(const chrono::milliseconds& time) {
-    // wait(); // wait for previous execution if active!
+template < typename... Args >
+inline void basic_timed_executor< Args... >::run(const chrono::milliseconds& time, Args... args) {
     reset(time);
-    basic_executor::run();
+    start();
+    do {
+        execute(std::forward<Args>(args)...);
+    } while (active());
+    stop();
 }
 
 
 
-inline void basic_timed_executor::launch(const chrono::milliseconds& time) {
-    // wait(); // wait for previous execution if active!
-    reset(time);
-    basic_executor::launch();
-}
-
-
-
+template < typename... Args >
 template < typename DurationType >
-inline DurationType basic_timed_executor::remaining() const noexcept {
+inline DurationType basic_timed_executor< Args... >::remaining() const noexcept {
     return std::chrono::duration_cast< DurationType >(_timer.expires_from_now());
 }
 
 
 
-inline bool basic_timed_executor::active() const {
+template < typename... Args >
+inline bool basic_timed_executor< Args... >::active() const {
     // test if std::future has valid state == timer async function has elapsed!
     return (_elapsed.wait_for(std::chrono::nanoseconds(0)) != std::future_status::ready);
 }
 
 
 
-inline void basic_timed_executor::reset(const chrono::milliseconds& time) {
+template < typename... Args >
+inline void basic_timed_executor< Args... >::wait() const {
+    // wait for timer to expire if currently running
+    if (_elapsed.valid()) {
+        _elapsed.wait();
+    }
+    // call base class method to wait for executer finish
+    basic_executor< const chrono::milliseconds&, Args... >::wait();
+}
+
+
+
+template < typename... Args >
+inline void basic_timed_executor< Args... >::reset(const chrono::milliseconds& time) {
     // reset timer and call async_wait
     _timer.expires_after(std::chrono::duration_cast< timer::duration >(time));
     _timer.async_wait([this](const boost::system::error_code&) { /* no need to do anything */ });
@@ -347,13 +431,22 @@ inline void basic_timed_executor::reset(const chrono::milliseconds& time) {
 
 
 
-inline void basic_timed_executor::wait() const {
-    // wait for timer to expire if currently running
-    if (_elapsed.valid()) {
-        _elapsed.wait();
-    }
-    // call base class method to wait for executer finish
-    basic_executor::wait();
+template < typename... Args >
+inline void basic_timed_executor< Args... >::execute(const chrono::milliseconds& time, Args... args) {
+    /* ... */
+}
+
+/// @endcond
+
+
+//------------------------------------------------------------------------------
+/// @brief      Waits for the completion of a single given *executor*.
+///
+/// @param[in]  executor  Executor to wait for.
+///
+template < typename Exec >
+inline void wait_for(Exec& executor) {
+    executor.wait();
 }
 
 
@@ -361,15 +454,20 @@ inline void basic_timed_executor::wait() const {
 //------------------------------------------------------------------------------
 /// @brief      Waits for the completion of given *executors*.
 ///
-/// @param[in]  executors  Executor list.
+/// @param[in]  executor  Executor to wait for.
+/// @param      others    Optional list of additional executors to wait for.
 ///
 /// @note       Provided for conveninece when handling multiple executors.
 ///
-inline void wait_for(const std::initializer_list< basic_executor* >& executors) {
-    for (const auto& executor : executors) {
-        executor->wait();
-    }
+/// @note       Could be solved with static if call (if constexpr () {}) but that would require C++17!
+///
+template < typename Exec, typename... Execs >
+inline void wait_for(Exec& executor, Execs&... others) {
+    executor.wait();  // wait must be defined!
+    wait_for(others...);
 }
+
+
 
 
 
@@ -381,7 +479,8 @@ inline void wait_for(const std::initializer_list< basic_executor* >& executors) 
 ///                         If true, waits for the completion of each before launching the next.
 ///                         If false, all executors are started in parallel.
 ///
-inline void chain(std::initializer_list< basic_executor* >& executors, bool sequential = false) {
+template < typename... Args >
+inline void chain(std::initializer_list< basic_executor< Args... >* >& executors, bool sequential = false) {
     for (const auto& executor : executors) {
         executor->launch();
         if (sequential == true) {

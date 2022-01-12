@@ -18,7 +18,6 @@
 #include <exception>
 #include <iterator>
 #include <type_traits>
-#include <iostream>
 #include "cast_iterator.hpp"   // std::cast_iterator<>
 
 namespace std {
@@ -66,6 +65,8 @@ class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
     /// @param[in]  pos         Initial iterator position w.r.t. container. Defaults to 0 (first element).
     /// @param[in]  range_size  Range size/width. Defaults to 1 (single element iteration).
     /// @param[in]  overlap     Overlap size (number of elements) between consecutive ranges. Defaults to 0 (no overlap).
+    ///
+    /// @todo       Allow negative values for *pos*, place iterator @ end of input container
     ///
     explicit range_iterator(Container* container, unsigned int pos     = 0,
                                                   unsigned int width   = 1,
@@ -249,6 +250,7 @@ class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
     ///
     unsigned int _step;
 
+ public:
     //--------------------------------------------------------------------------
     /// @brief      Associated container instance.
     ///
@@ -257,25 +259,33 @@ class range_iterator : std::iterator< std::random_access_iterator_tag, T > {
 
 
 
+//--------------------------------------------------------------------------
+/// @cond
+
 template < typename Container, typename T >
 range_iterator< Container, T >::range_iterator(Container* container, unsigned int pos, unsigned int width, unsigned int overlap) :
     _container(container),
     _pos(pos),
     _width(width) {
-        // runtime assertions, required for proper function of range_iterator
-        assert(pos >= 0 && pos <= _container->size());
-        assert(width > 0 && width > overlap);
-        // compute increment/decrement step
-        _step = width - overlap;
-        // // place positions @ lower/upper boundaries
-        // _ubound = static_cast< int >(_pos + _width + 1);
-        // _ubound = (_ubound > _container.size()) ? (_container.size()) : _ubound;
+        if (_container != nullptr) {
+            // runtime assertions, required for proper function of range_iterator
+            assert(pos >= 0 && pos <= _container->size());
+            assert(width > 0 && width > overlap);
+            // compute increment/decrement step
+            _step = width - overlap;
+            // printf("Iterator [%lu, %lu, %lu] -> src %p\n", _pos, _width, _step, _container);
+        } else {
+            // printf("Placeholder/dummy iterator! [%lu, %lu, %lu]\n", _pos, _width, _step);
+        }
 }
 
 
 
 template < typename Container, typename T >
 range_iterator< Container, T >& range_iterator< Container, T >::operator++() {
+    if (_container == nullptr) {
+        throw std::runtime_error("[" + std::string(__func__) + "] Dummy/placeholder range_iterators can't be incremented!");
+    }
     if ((_pos + _step) <= _container->size()) {
         _pos += _step;
     }
@@ -454,6 +464,7 @@ range_iterator< Container, T >::operator range_iterator< oContainer, oT >() cons
     return range_iterator< oContainer, oT >(_container, _pos, _width,  _width - _step);
 }
 
+///  @endcond
 
 
 //------------------------------------------------------------------------------

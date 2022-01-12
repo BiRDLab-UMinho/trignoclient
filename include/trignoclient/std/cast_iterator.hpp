@@ -187,6 +187,9 @@ class cast_iterator : std::iterator< std::random_access_iterator_tag, T > {
 
 
 
+//--------------------------------------------------------------------------
+/// @cond
+
 template < typename Container, typename T >
 cast_iterator< Container, T >::cast_iterator(Container* container, unsigned int pos) :
     _container(container),
@@ -310,19 +313,26 @@ cast_iterator< Container, T >::operator cast_iterator< oContainer, oT >() const 
 
 
 
-//------------------------------------------------------------------------------
-/// @brief      Equality operator.
-///
-/// @param[in]  lhs  Left operand (iterator to compare).
-/// @param[in]  rhs  Right operand (iterator to compare).
-///
-/// @return     True if iterators @ same position w.r.t container, false othewise.
-///
 template < typename oContainer, typename oT >
 bool operator==(const cast_iterator< oContainer, oT >& lhs, const cast_iterator< oContainer, oT >& rhs) {
     return  ((lhs._container == rhs._container) && (lhs._pos == rhs._pos));
 }
 
+
+
+template < typename oContainer, typename oT >
+bool operator< (const cast_iterator< oContainer, oT >& lhs, const cast_iterator< oContainer, oT >& rhs) {
+    return ((lhs._container == rhs._container) && (lhs._pos < rhs._pos));
+}
+
+
+
+template < typename oContainer, typename oT >
+typename cast_iterator< oContainer, oT >::difference_type operator-(const cast_iterator< oContainer, oT >& lhs, const cast_iterator< oContainer, oT >& rhs) {
+    return (lhs._pos - rhs._pos);
+}
+
+/// @endcond
 
 
 //------------------------------------------------------------------------------
@@ -338,21 +348,6 @@ bool operator==(const cast_iterator< oContainer, oT >& lhs, const cast_iterator<
 template < typename Container, typename T >
 bool operator!=(const cast_iterator< Container, T >& lhs, const cast_iterator< Container, T >& rhs) {
     return !(lhs == rhs);
-}
-
-
-
-//------------------------------------------------------------------------------
-/// @brief      'Less than' comparison operator.
-///
-/// @param[in]  lhs  Left operand (iterator to compare).
-/// @param[in]  rhs  Right operand (iterator to compare).
-///
-/// @return     True if *lhs* @ previous position w.r.t container than *rhs*, false othewise.
-///
-template < typename oContainer, typename oT >
-bool operator< (const cast_iterator< oContainer, oT >& lhs, const cast_iterator< oContainer, oT >& rhs) {
-    return ((lhs._container == rhs._container) && (lhs._pos < rhs._pos));
 }
 
 
@@ -408,13 +403,16 @@ inline bool operator>=(const cast_iterator< Container, T >& lhs, const cast_iter
 
 
 
-template < typename oContainer, typename oT >
-typename cast_iterator< oContainer, oT >::difference_type operator-(const cast_iterator< oContainer, oT >& lhs, const cast_iterator< oContainer, oT >& rhs) {
-    return (lhs._pos - rhs._pos);
-}
-
-
-
+//------------------------------------------------------------------------------
+/// @brief      Addition operator, between an iterator and difference_type (number of positions).
+///
+/// @param[in]  lhs  Left operand (iterator).
+/// @param[in]  n    Number of position increments.
+///
+/// @return     Copy of lhs with given position increments.
+///
+/// @note       Wraps around member compound addition operator overload.
+///
 template < typename Container, typename T >
 cast_iterator< Container, T > operator+(cast_iterator< Container, T > lhs, const typename cast_iterator< Container, T >::difference_type& n) {
     lhs += n;
@@ -423,6 +421,16 @@ cast_iterator< Container, T > operator+(cast_iterator< Container, T > lhs, const
 
 
 
+//------------------------------------------------------------------------------
+/// @brief      Subtraction operator, between an iterator and difference_type (number of positions).
+///
+/// @param[in]  lhs  Left operand (iterator).
+/// @param[in]  n    Number of position drecrements.
+///
+/// @return     Copy of lhs with given position decrements.
+///
+/// @note       Wraps around member compound addition operator overload.
+///
 template < typename Container, typename T >
 cast_iterator< Container, T > operator-(cast_iterator< Container, T > lhs, const typename cast_iterator< Container, T >::difference_type& n) {
     lhs += n;
