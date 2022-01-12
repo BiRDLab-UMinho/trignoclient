@@ -4,4 +4,6 @@
 *.html
 doc/*
 build/*
-
+# compilation transient/temp files
+CMakeCache.txt
+CMakeFiles/*
